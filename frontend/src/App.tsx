@@ -13,6 +13,7 @@ import AgentDossier from "@/pages/AgentDossier";
 import PilotageDashboard from "@/pages/PilotageDashboard";
 import ControleForceOrdre from "@/pages/ControleForceOrdre";
 import VerifyPublic from "@/pages/VerifyPublic";
+import VerifyOffline from "@/pages/VerifyOffline";
 
 function Ecran({ children }: { children: React.ReactNode }) {
   return (
@@ -59,6 +60,9 @@ export default function App() {
 
         {/* Vérification publique d'un certificat (cible du QR) — sans authentification */}
         <Route path="/verify/:uuid" element={<VerifyPublic />} />
+
+        {/* Vérification hors-ligne (signature validée localement) — sans authentification */}
+        <Route path="/verify-offline" element={<VerifyOffline />} />
 
         {/* Espace usager */}
         <Route

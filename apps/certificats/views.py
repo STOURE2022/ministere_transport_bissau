@@ -181,6 +181,31 @@ class VerifyView(APIView):
         })
 
 
+class ClePubliqueView(APIView):
+    """
+    Clé publique RSA du SNICV (PEM) — publique par nature. Permet la
+    vérification HORS-LIGNE : un appareil la récupère une fois, puis valide
+    localement les certificats scannés sans réseau.
+    """
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(responses={200: OpenApiTypes.OBJECT})
+    def get(self, request):
+        from cryptography.hazmat.primitives import serialization
+
+        from . import crypto
+        pem = crypto.charger_cle_publique().public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode("ascii")
+        return Response({
+            "cle_publique_pem": pem,
+            "algorithme": "RSASSA-PKCS1-v1_5",
+            "hachage": "SHA-256",
+        })
+
+
 class ScansListView(ListAPIView):
     """Historique des scans d'un certificat (personnel SNICV / forces de l'ordre)."""
 

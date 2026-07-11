@@ -4,6 +4,7 @@ from django.urls import path
 from .views import (
     CertificatDetailView,
     CertificatPdfView,
+    ClePubliqueView,
     EmettreCertificatView,
     RevoquerCertificatView,
     ScansGlobalListView,
@@ -27,4 +28,6 @@ urlpatterns = [
     path("verify/<uuid:uuid>/", VerifyView.as_view(), name="verify"),
     # Vérification par numéro de plaque (secours QR illisible, staff).
     path("verify-plaque/", VerifyPlaqueView.as_view(), name="verify-plaque"),
+    # Clé publique pour la vérification hors-ligne.
+    path("cle-publique/", ClePubliqueView.as_view(), name="cle-publique"),
 ]

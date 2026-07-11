@@ -182,6 +182,7 @@ export interface Certificat {
   signature_rsa: string;
   qr_payload: string;
   pdf_url: string | null;
+  jeton_hors_ligne?: string;
   date_emission: string;
   date_expiration: string;
   motif_revocation: string;

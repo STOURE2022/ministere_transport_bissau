@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, Loader2, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Check, Copy, Download, Loader2, ShieldAlert, ShieldCheck } from "lucide-react";
 import { telechargerCertificatPdf } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,18 @@ export function CertificatPremium({
   const [tel, setTel] = useState(false);
   const [errPdf, setErrPdf] = useState<string | null>(null);
   const [motif, setMotif] = useState("");
+  const [copie, setCopie] = useState(false);
+
+  async function copierJeton() {
+    if (!certificat.jeton_hors_ligne) return;
+    try {
+      await navigator.clipboard.writeText(certificat.jeton_hors_ligne);
+      setCopie(true);
+      setTimeout(() => setCopie(false), 2000);
+    } catch {
+      /* presse-papiers indisponible */
+    }
+  }
 
   async function telecharger() {
     setTel(true);
@@ -137,6 +149,13 @@ export function CertificatPremium({
           Télécharger le PDF officiel
         </Button>
         {errPdf && <span className="text-[12.5px] text-destructive">{errPdf}</span>}
+
+        {certificat.jeton_hors_ligne && (
+          <Button variant="ghost" onClick={copierJeton} title="Pour un contrôle sans réseau (/verify-offline)">
+            {copie ? <Check className="size-4 text-[#1e8e5a]" /> : <Copy className="size-4" />}
+            {copie ? "Jeton copié" : "Jeton hors-ligne"}
+          </Button>
+        )}
 
         {revocable && onRevoquer && (
           <div className="ml-auto flex items-end gap-2">

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, Loader2, QrCode, ScanLine, Search, ShieldCheck, Siren } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Camera, Loader2, QrCode, ScanLine, Search, ShieldCheck, Siren, WifiOff } from "lucide-react";
 import { api, messageErreur } from "@/lib/api";
 import { formatDateTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -131,12 +132,21 @@ export default function ControleForceOrdre() {
 
   return (
     <Layout>
-      <div className="mb-6">
-        <div className="eyebrow">Forces de l'ordre · Vérification terrain</div>
-        <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight">Contrôle routier</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Scannez le QR du certificat ou saisissez la plaque — même QR abîmé.
-        </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="eyebrow">Forces de l'ordre · Vérification terrain</div>
+          <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight">Contrôle routier</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Scannez le QR du certificat ou saisissez la plaque — même QR abîmé.
+          </p>
+        </div>
+        <Link
+          to="/verify-offline"
+          className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-[13px] font-semibold text-primary-deep transition hover:border-primary hover:bg-secondary"
+        >
+          <WifiOff className="size-4" />
+          Mode hors-ligne
+        </Link>
       </div>
 
       {/* Deux méthodes */}

@@ -1,5 +1,7 @@
 """Tests de l'étape 6 : émission du certificat QR, signature RSA, PDF, révocation."""
+import base64
 import datetime
+import json
 import shutil
 import tempfile
 import uuid as uuidlib
@@ -375,3 +377,34 @@ class ScansGlobalTests(CertificatBase):
         self.client.force_authenticate(self.usager)
         resp = self.client.get(reverse("v1:certificats:scans-global"))
         self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class VerificationHorsLigneTests(CertificatBase):
+    def _cert(self):
+        dossier = self._dossier_immatricule()
+        self.client.force_authenticate(self.agent)
+        cid = self.client.post(reverse("v1:certificats:emettre", args=[dossier.id])).data["id"]
+        return Certificat.objects.get(id=cid)
+
+    def test_jeton_present_et_signature_valide(self):
+        cert = self._cert()
+        resp = self.client.get(reverse("v1:certificats:detail", args=[cert.id]))
+        jeton = resp.data["jeton_hors_ligne"]
+        self.assertTrue(jeton)
+        payload = json.loads(base64.urlsafe_b64decode(jeton))
+        # La signature doit valider la chaîne canonique embarquée (vérif hors-ligne).
+        self.assertTrue(crypto.verifier(payload["c"].encode("utf-8"), payload["s"]))
+        self.assertEqual(payload["id"], str(cert.id))
+
+    def test_jeton_falsifie_invalide(self):
+        cert = self._cert()
+        jeton = self.client.get(reverse("v1:certificats:detail", args=[cert.id])).data["jeton_hors_ligne"]
+        payload = json.loads(base64.urlsafe_b64decode(jeton))
+        altere = payload["c"].replace("Corolla", "Ferrari")
+        self.assertFalse(crypto.verifier(altere.encode("utf-8"), payload["s"]))
+
+    def test_cle_publique_accessible_sans_auth(self):
+        resp = self.client.get(reverse("v1:certificats:cle-publique"))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn("BEGIN PUBLIC KEY", resp.data["cle_publique_pem"])
+        self.assertEqual(resp.data["algorithme"], "RSASSA-PKCS1-v1_5")

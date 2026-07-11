@@ -1,20 +1,43 @@
 """Serializers de l'app certificats."""
+import base64
+import json
+
 from rest_framework import serializers
 
+from . import crypto
 from .models import Certificat, ScanLog
+
+
+def construire_jeton_hors_ligne(certificat) -> str:
+    """
+    Jeton auto-porteur pour vérification HORS-LIGNE : contient la sérialisation
+    canonique signée (`c`) et la signature (`s`), plus des champs d'affichage.
+    Un vérificateur muni de la clé publique valide la signature sur `c` sans réseau.
+    """
+    canonique = crypto.canonicaliser(certificat.donnees_snapshot).decode("utf-8")
+    payload = {
+        "v": 1,
+        "c": canonique,
+        "s": certificat.signature_rsa,
+        "id": str(certificat.id),
+        "exp": certificat.date_expiration.isoformat(),
+    }
+    brut = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(brut).decode("ascii")
 
 
 class CertificatSerializer(serializers.ModelSerializer):
     statut_libelle = serializers.CharField(source="get_statut_display", read_only=True)
     est_valide = serializers.BooleanField(read_only=True)
     pdf_url = serializers.SerializerMethodField()
+    jeton_hors_ligne = serializers.SerializerMethodField()
 
     class Meta:
         model = Certificat
         fields = (
             "id", "dossier", "statut", "statut_libelle", "est_valide",
             "donnees_snapshot", "hash_sha256", "signature_rsa", "qr_payload",
-            "pdf_url", "date_emission", "date_expiration", "motif_revocation",
+            "pdf_url", "jeton_hors_ligne", "date_emission", "date_expiration", "motif_revocation",
         )
         read_only_fields = fields
 
@@ -24,6 +47,9 @@ class CertificatSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         url = obj.pdf_fichier.url
         return request.build_absolute_uri(url) if request else url
+
+    def get_jeton_hors_ligne(self, obj) -> str:
+        return construire_jeton_hors_ligne(obj)
 
 
 class RevocationSerializer(serializers.Serializer):
