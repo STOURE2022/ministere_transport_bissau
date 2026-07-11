@@ -7,17 +7,30 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.core.permissions import IsAdmin, IsStaffRole
+from apps.core.permissions import IsAdmin, IsStaffRole, PeutDeclarerSignalement
 
 from .models import Signalement, StatutSignalement
 from .serializers import LeverSerializer, SignalementSerializer, SignalerSerializer
-from .services import lever_signalement, signaler_vehicule, trouver_vehicule
+from .services import (
+    lever_signalement,
+    signaler_vehicule,
+    trouver_vehicule,
+    usager_possede_vehicule,
+)
 
 
 class SignalementListCreateView(APIView):
-    """Liste des signalements et déclaration d'un nouveau (personnel autorisé)."""
+    """
+    - GET  : liste des signalements actifs (personnel : agent / forces de l'ordre / admin).
+    - POST : déclaration d'un véhicule volé/recherché. Ouverte à l'usager (son propre
+      véhicule) et aux agents/admin. Les forces de l'ordre ne déclarent pas ; elles
+      découvrent l'alerte lors d'un contrôle.
+    """
 
-    permission_classes = [IsAuthenticated, IsStaffRole]
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsAuthenticated(), PeutDeclarerSignalement()]
+        return [IsAuthenticated(), IsStaffRole()]
 
     @extend_schema(responses={200: SignalementSerializer(many=True)})
     def get(self, request):
@@ -40,6 +53,10 @@ class SignalementListCreateView(APIView):
         if vehicule is None:
             return Response({"detail": "Aucun véhicule ne correspond à cette immatriculation / ce VIN."},
                             status=status.HTTP_400_BAD_REQUEST)
+        # Un usager ne peut signaler que son propre véhicule.
+        if request.user.role == "USAGER" and not usager_possede_vehicule(request.user, vehicule):
+            return Response({"detail": "Vous ne pouvez déclarer que l'un de vos propres véhicules."},
+                            status=status.HTTP_403_FORBIDDEN)
         ok, message, signalement = signaler_vehicule(
             vehicule, request.user, type=data["type"], reference=data["reference"],
             motif=data["motif"], request=request)

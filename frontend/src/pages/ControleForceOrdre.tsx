@@ -1,22 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Camera, Loader2, QrCode, ScanLine, Search, ShieldCheck, Siren, WifiOff } from "lucide-react";
+import { Camera, Info, Loader2, QrCode, ScanLine, Search, ShieldCheck, WifiOff } from "lucide-react";
 import { api, messageErreur } from "@/lib/api";
 import { formatDateTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import {
-  TYPES_SIGNALEMENT,
   type Paginated,
   type ResultatScan,
   type ScanLog,
-  type TypeSignalement,
   type VerificationResult,
 } from "@/lib/types";
 import { Layout } from "@/components/Layout";
 import { ResultatVerification } from "@/components/ResultatVerification";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, Select } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -37,14 +34,6 @@ export default function ControleForceOrdre() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [historique, setHistorique] = useState<ScanLog[]>([]);
   const resultRef = useRef<HTMLDivElement>(null);
-
-  // Déclaration de signalement (véhicule volé / recherché)
-  const [sigPlaque, setSigPlaque] = useState("");
-  const [sigType, setSigType] = useState<TypeSignalement>("VOLE");
-  const [sigRef, setSigRef] = useState("");
-  const [sigMotif, setSigMotif] = useState("");
-  const [sigBusy, setSigBusy] = useState(false);
-  const [sigMsg, setSigMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const chargerHistorique = useCallback(() => {
     api
@@ -102,31 +91,6 @@ export default function ControleForceOrdre() {
       setErreur(messageErreur(err, "Vérification impossible."));
     } finally {
       setBusy(null);
-    }
-  }
-
-  async function signaler(e: React.FormEvent) {
-    e.preventDefault();
-    if (!sigPlaque.trim()) return;
-    setSigBusy(true);
-    setSigMsg(null);
-    try {
-      await api.post("/signalements/", {
-        immatriculation: sigPlaque,
-        type: sigType,
-        reference: sigRef,
-        motif: sigMotif,
-      });
-      setSigMsg({
-        ok: true,
-        text: "Signalement enregistré. Toute vérification de ce véhicule déclenchera l'alerte.",
-      });
-      setSigRef("");
-      setSigMotif("");
-    } catch (err) {
-      setSigMsg({ ok: false, text: messageErreur(err, "Signalement impossible.") });
-    } finally {
-      setSigBusy(false);
     }
   }
 
@@ -234,82 +198,23 @@ export default function ControleForceOrdre() {
         </div>
       )}
 
-      {/* Signaler un véhicule */}
+      {/* Détection automatique des véhicules signalés */}
       <div className="mt-8">
-        <div className="eyebrow mb-2">Signaler un véhicule</div>
-        <Card>
-          <CardHeader className="border-b border-border">
-            <CardTitle className="flex items-center gap-2">
-              <span className="grid size-8 place-items-center rounded-lg bg-destructive text-white">
-                <Siren className="size-4" />
-              </span>
-              Déclarer volé / recherché
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-5">
-            <form onSubmit={signaler} className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="sig-plaque">Immatriculation</Label>
-                <Input
-                  id="sig-plaque"
-                  value={sigPlaque}
-                  onChange={(e) => setSigPlaque(e.target.value.toUpperCase())}
-                  placeholder="AB 4821 BS"
-                  className="mt-1 uppercase"
-                />
-              </div>
-              <div>
-                <Label htmlFor="sig-type">Type de signalement</Label>
-                <Select
-                  id="sig-type"
-                  value={sigType}
-                  onChange={(e) => setSigType(e.target.value as TypeSignalement)}
-                  className="mt-1"
-                >
-                  {TYPES_SIGNALEMENT.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="sig-ref">Référence (PV / dossier)</Label>
-                <Input
-                  id="sig-ref"
-                  value={sigRef}
-                  onChange={(e) => setSigRef(e.target.value)}
-                  placeholder="PV-2026-0142"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="sig-motif">Motif / circonstances</Label>
-                <Input
-                  id="sig-motif"
-                  value={sigMotif}
-                  onChange={(e) => setSigMotif(e.target.value)}
-                  placeholder="Déclaré volé à Bissau"
-                  className="mt-1"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <Button type="submit" variant="destructive" disabled={sigBusy}>
-                  {sigBusy ? <Loader2 className="size-4 animate-spin" /> : <Siren className="size-4" />}
-                  Enregistrer le signalement
-                </Button>
-              </div>
-            </form>
-            {sigMsg && (
-              <p
-                className={cn(
-                  "mt-3 rounded-lg px-3 py-2 text-[13px]",
-                  sigMsg.ok ? "bg-[#E4F3EC] text-[#166b44]" : "bg-[#FBE7E7] text-[#9a2f2f]"
-                )}
-              >
-                {sigMsg.text}
+        <Card className="border-l-4 border-l-accent">
+          <CardContent className="flex items-start gap-3 py-5">
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-primary-deep">
+              <Info className="size-[18px]" />
+            </span>
+            <div>
+              <p className="text-[14.5px] font-semibold text-foreground">
+                Les véhicules volés sont détectés automatiquement
               </p>
-            )}
+              <p className="mt-0.5 text-[13px] text-muted-foreground">
+                Un véhicule déclaré volé ou recherché (par son propriétaire ou par un agent du
+                ministère) déclenche une <b>alerte rouge</b> dès qu'il est vérifié ici, par QR ou
+                par plaque. Vous n'avez rien à saisir : contrôlez, l'alerte apparaît.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>

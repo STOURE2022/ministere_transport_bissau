@@ -38,3 +38,13 @@ class IsStaffRole(RolePermission):
     """Tout profil interne (non-usager)."""
 
     roles = ("AGENT", "FORCE_ORDRE", "ADMIN")
+
+
+class PeutDeclarerSignalement(RolePermission):
+    """
+    Déclaration d'un véhicule volé/recherché : l'usager (uniquement son propre
+    véhicule — contrôle de propriété fait dans la vue) et les agents/admin.
+    Les forces de l'ordre ne déclarent pas : elles *découvrent* l'alerte au contrôle.
+    """
+
+    roles = ("USAGER", "AGENT", "ADMIN")

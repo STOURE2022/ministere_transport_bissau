@@ -27,6 +27,7 @@ import { Stepper } from "@/components/Stepper";
 import { StatutBadge } from "@/components/StatutBadge";
 import { PlaqueImmatriculation } from "@/components/PlaqueImmatriculation";
 import { CertificatPremium } from "@/components/CertificatPremium";
+import { SignalerVehiculeCard } from "@/components/SignalerVehiculeCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -253,6 +254,15 @@ export default function DossierDetail() {
               </dl>
             </CardContent>
           </Card>
+
+          {immat && (
+            <SignalerVehiculeCard
+              contexte="usager"
+              immatriculation={immat.numero}
+              vin={dossier.vehicule.vin}
+              onDeclare={charger}
+            />
+          )}
 
           {verification && (
             <Card>

@@ -73,9 +73,9 @@ class SignalementBase(APITestCase):
 
 
 class DeclarationTests(SignalementBase):
-    def test_signaler_par_plaque(self):
+    def test_agent_signale_par_plaque(self):
         self._vehicule_certifie()
-        self.client.force_authenticate(self.force)
+        self.client.force_authenticate(self.agent)
         resp = self.client.post(reverse("v1:signalements:liste-creer"),
                                 {"immatriculation": "AB 4821 BS", "type": "VOLE",
                                  "reference": "PV-2026-77", "motif": "Déclaré volé à Bissau"})
@@ -83,7 +83,7 @@ class DeclarationTests(SignalementBase):
         self.assertEqual(resp.data["type"], "VOLE")
         self.assertTrue(Signalement.objects.filter(statut=StatutSignalement.ACTIF).exists())
 
-    def test_signaler_par_vin(self):
+    def test_agent_signale_par_vin(self):
         veh, _ = self._vehicule_certifie()
         self.client.force_authenticate(self.agent)
         resp = self.client.post(reverse("v1:signalements:liste-creer"),
@@ -91,22 +91,40 @@ class DeclarationTests(SignalementBase):
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
     def test_signaler_vehicule_inconnu(self):
-        self.client.force_authenticate(self.force)
+        self.client.force_authenticate(self.agent)
         resp = self.client.post(reverse("v1:signalements:liste-creer"),
                                 {"immatriculation": "ZZ 9999 BS"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_doublon_actif_refuse(self):
         self._vehicule_certifie()
-        self.client.force_authenticate(self.force)
+        self.client.force_authenticate(self.agent)
         url = reverse("v1:signalements:liste-creer")
         self.client.post(url, {"immatriculation": "AB 4821 BS", "type": "VOLE"})
         resp = self.client.post(url, {"immatriculation": "AB 4821 BS", "type": "VOLE"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_usager_ne_peut_pas_signaler(self):
+    def test_usager_signale_son_vehicule(self):
+        # Le véhicule certifié appartient à self.usager (proprietaire).
         self._vehicule_certifie()
         self.client.force_authenticate(self.usager)
+        resp = self.client.post(reverse("v1:signalements:liste-creer"),
+                                {"immatriculation": "AB 4821 BS", "type": "VOLE",
+                                 "reference": "PV-2026-9", "motif": "Volé cette nuit"})
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+    def test_usager_ne_signale_pas_vehicule_autrui(self):
+        self._vehicule_certifie()  # appartient à self.usager
+        autre = creer_user("autre@ex.gw", tel="+245955000009")
+        self.client.force_authenticate(autre)
+        resp = self.client.post(reverse("v1:signalements:liste-creer"),
+                                {"immatriculation": "AB 4821 BS"})
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_force_ordre_ne_declare_pas(self):
+        # Les forces de l'ordre découvrent l'alerte au contrôle, mais ne déclarent pas.
+        self._vehicule_certifie()
+        self.client.force_authenticate(self.force)
         resp = self.client.post(reverse("v1:signalements:liste-creer"),
                                 {"immatriculation": "AB 4821 BS"})
         self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)

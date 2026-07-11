@@ -1,6 +1,7 @@
 """Logique métier des signalements de véhicules."""
 from __future__ import annotations
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
 from apps.core.services import log_action
@@ -36,6 +37,18 @@ def trouver_vehicule(*, immatriculation: str = "", vin: str = "") -> Vehicule | 
     if vin_norm:
         return Vehicule.objects.filter(vin__iexact=vin_norm).order_by("-date_creation").first()
     return None
+
+
+def usager_possede_vehicule(user, vehicule) -> bool:
+    """Vrai si `vehicule` appartient à `user` (propriétaire direct ou via son dossier)."""
+    if vehicule is None or user is None:
+        return False
+    if getattr(vehicule, "proprietaire_id", None) == user.id:
+        return True
+    try:
+        return vehicule.dossier.usager_id == user.id
+    except ObjectDoesNotExist:
+        return False
 
 
 def signaler_vehicule(vehicule, agent, *, type=TypeSignalement.VOLE, reference="",
