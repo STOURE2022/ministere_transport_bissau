@@ -78,6 +78,9 @@ export default function App() {
         {/* Vérification hors-ligne (signature validée localement) — sans authentification */}
         <Route path="/verify-offline" element={<VerifyOffline />} />
 
+        {/* Page d'accueil publique, toujours accessible (même connecté) */}
+        <Route path="/accueil" element={<AccueilPublic />} />
+
         {/* Accueil public (anonyme) ou espace selon le rôle (connecté) */}
         <Route path="/" element={<Accueil />} />
         <Route

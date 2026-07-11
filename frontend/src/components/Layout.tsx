@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, ShieldCheck } from "lucide-react";
+import { Home, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { accueilPourRole, ROLE_LABEL } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -78,6 +78,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="flex-1" />
+        <Link
+          to="/accueil"
+          title="Page d'accueil"
+          className="mr-1 inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/5 px-2.5 py-1.5 text-[13px] font-medium text-[#B9CBE6] transition-colors hover:bg-white/15 hover:text-white"
+        >
+          <Home className="size-4" />
+          <span className="max-sm:hidden">Accueil</span>
+        </Link>
         {user && (
           <div className="flex items-center gap-3">
             <div className="text-right text-[13px] leading-tight max-sm:hidden">

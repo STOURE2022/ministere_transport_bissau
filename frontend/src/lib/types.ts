@@ -234,6 +234,22 @@ export interface VerificationResult {
   alerte?: Alerte | null;
 }
 
+export interface Signalement {
+  id: string;
+  type: TypeSignalement;
+  type_libelle: string;
+  statut: "ACTIF" | "LEVE";
+  statut_libelle: string;
+  reference: string;
+  motif: string;
+  immatriculation: string | null;
+  vin: string;
+  signale_par_nom: string | null;
+  date_signalement: string;
+  date_levee: string | null;
+  motif_levee: string;
+}
+
 export interface ScanLog {
   id: string;
   resultat: ResultatScan;
