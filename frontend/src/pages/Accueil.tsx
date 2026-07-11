@@ -266,10 +266,11 @@ const CSS = `
   --line:#e6ddca; --green:#1e8e5a;
   --gw-red:#ce1126; --gw-yellow:#fcd116; --gw-green:#009739;
   --serif:Georgia,"Times New Roman",serif;
-  background:var(--paper);color:var(--ink);line-height:1.6;
+  background:var(--paper);color:var(--ink);line-height:1.6;overflow-x:hidden;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 .accueil-root *{box-sizing:border-box}
+.accueil-root img,.accueil-root svg{max-width:100%}
 .accueil-root h1,.accueil-root h2,.accueil-root h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0}
 .accueil-root p{margin:0}
 .accueil-root a{color:inherit;text-decoration:none}
@@ -406,16 +407,29 @@ const CSS = `
 
 @media(max-width:900px){
   .accueil-root .hero-grid,.accueil-root .sec-grid,.accueil-root .cov-grid{grid-template-columns:1fr;gap:40px}
+  .accueil-root .hero-grid{padding:56px 0 64px}
   .accueil-root .kpi-grid{grid-template-columns:1fr 1fr}
   .accueil-root .kpi:nth-child(2){border-right:none}
   .accueil-root .steps{grid-template-columns:1fr 1fr}
   .accueil-root .spaces{grid-template-columns:1fr}
   .accueil-root .foot-grid{grid-template-columns:1fr 1fr}
   .accueil-root .nav .links{display:none}
+  .accueil-root .nav{gap:10px}
+  .accueil-root section{padding:60px 0}
 }
 @media(max-width:560px){
-  .accueil-root .kpi-grid,.accueil-root .steps,.accueil-root .foot-grid{grid-template-columns:1fr}
+  .accueil-root .wrap{padding:0 16px}
+  .accueil-root .kpi-grid,.accueil-root .steps,.accueil-root .spaces,.accueil-root .regions,.accueil-root .foot-grid{grid-template-columns:1fr}
   .accueil-root .kpi{border-right:none;border-bottom:1px solid rgba(255,255,255,.08)}
-  .accueil-root .final{padding:40px 24px}
+  .accueil-root .final{padding:36px 22px}
+  .accueil-root .brand .sub{display:none}
+  .accueil-root .nav .right .btn{display:none}
+  .accueil-root .hero h1{font-size:clamp(1.9rem,8vw,2.6rem)}
+  .accueil-root .hero .lede{font-size:15.5px}
+  .accueil-root .hero-meta{gap:18px}
+  .accueil-root .hero-cta .btn{flex:1;justify-content:center}
+  .accueil-root .shield{max-width:240px}
+  .accueil-root .shield .big{font-size:72px}
+  .accueil-root section{padding:52px 0}
 }
 `;

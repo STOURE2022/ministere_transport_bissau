@@ -560,4 +560,12 @@ const PT: Record<string, string> = {
   "Aucun dossier à cette étape": "Nenhum processo nesta etapa",
   "Rien à traiter dans": "Nada a tratar em",
   "pour l'instant.": "de momento.",
+
+  /* ── Scanner QR par caméra ── */
+  "Scanner avec la caméra": "Digitalizar com a câmara",
+  "Visez le QR du certificat": "Aponte para o QR do certificado",
+  "Caméra indisponible. Autorisez l'accès ou saisissez le QR manuellement.":
+    "Câmara indisponível. Autorize o acesso ou introduza o QR manualmente.",
+  "Fermer": "Fechar",
+  "ou collez le lien lu par un autre lecteur": "ou cole a ligação lida por outro leitor",
 };

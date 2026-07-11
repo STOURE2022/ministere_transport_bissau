@@ -13,6 +13,7 @@ import {
 } from "@/lib/types";
 import { Layout } from "@/components/Layout";
 import { ResultatVerification } from "@/components/ResultatVerification";
+import { ScannerQR } from "@/components/ScannerQR";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -35,6 +36,7 @@ export default function ControleForceOrdre() {
   const [busy, setBusy] = useState<"plaque" | "qr" | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [historique, setHistorique] = useState<ScanLog[]>([]);
+  const [scanOuvert, setScanOuvert] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
 
   const chargerHistorique = useCallback(() => {
@@ -71,19 +73,18 @@ export default function ControleForceOrdre() {
     }
   }
 
-  async function verifierQr(e: React.FormEvent) {
-    e.preventDefault();
+  async function verifierQrTexte(texte: string) {
     setErreur(null);
-    const uuid = qr.match(RE_UUID)?.[0];
+    const uuid = texte.match(RE_UUID)?.[0];
     if (!uuid) {
       setErreur(t("QR non reconnu : collez l'URL complète lue par le lecteur."));
       return;
     }
     let h: string | undefined;
     try {
-      h = new URL(qr.trim()).searchParams.get("h") ?? undefined;
+      h = new URL(texte.trim()).searchParams.get("h") ?? undefined;
     } catch {
-      h = qr.match(/[?&]h=([^&\s]+)/)?.[1];
+      h = texte.match(/[?&]h=([^&\s]+)/)?.[1];
     }
     setBusy("qr");
     try {
@@ -96,8 +97,21 @@ export default function ControleForceOrdre() {
     }
   }
 
+  function verifierQr(e: React.FormEvent) {
+    e.preventDefault();
+    verifierQrTexte(qr);
+  }
+
+  function surScan(texte: string) {
+    setScanOuvert(false);
+    setQr(texte);
+    verifierQrTexte(texte);
+  }
+
   return (
     <Layout>
+      {scanOuvert && <ScannerQR onScan={surScan} onClose={() => setScanOuvert(false)} />}
+
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="eyebrow">{t("Forces de l'ordre · Vérification terrain")}</div>
@@ -131,6 +145,20 @@ export default function ControleForceOrdre() {
             <p className="mb-3 text-[13px] text-muted-foreground">
               {t("Méthode recommandée : l'empreinte encodée prouve l'intégrité des données.")}
             </p>
+            <Button
+              type="button"
+              onClick={() => setScanOuvert(true)}
+              className="w-full bg-primary-deep hover:bg-navy"
+              disabled={busy !== null}
+            >
+              <Camera className="size-4" />
+              {t("Scanner avec la caméra")}
+            </Button>
+            <div className="my-3 flex items-center gap-3 text-[11px] text-faint">
+              <span className="h-px flex-1 bg-border" />
+              {t("ou collez le lien lu par un autre lecteur")}
+              <span className="h-px flex-1 bg-border" />
+            </div>
             <form onSubmit={verifierQr} className="space-y-3">
               <textarea
                 value={qr}
@@ -139,8 +167,8 @@ export default function ControleForceOrdre() {
                 className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 placeholder="https://…/verify/xxxxxxxx-…?h=…"
               />
-              <Button type="submit" className="w-full bg-primary-deep hover:bg-navy" disabled={busy !== null}>
-                {busy === "qr" ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+              <Button type="submit" variant="outline" className="w-full" disabled={busy !== null}>
+                {busy === "qr" ? <Loader2 className="size-4 animate-spin" /> : <QrCode className="size-4" />}
                 {t("Vérifier le QR")}
               </Button>
             </form>
