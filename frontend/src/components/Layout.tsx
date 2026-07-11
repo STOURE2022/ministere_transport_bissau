@@ -1,0 +1,58 @@
+import { Link, useNavigate } from "react-router-dom";
+import { LogOut, ShieldCheck } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await logout();
+    navigate("/login");
+  }
+
+  const initiales = user ? `${user.prenom[0] ?? ""}${user.nom[0] ?? ""}`.toUpperCase() : "";
+
+  return (
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-20 flex h-15 items-center gap-4 bg-primary-deep px-5 py-3 text-white shadow-sm">
+        <Link to="/" className="flex items-center gap-3">
+          <span className="grid size-9 place-items-center rounded-lg border border-white/20 bg-white/10">
+            <ShieldCheck className="size-5 text-[#EBCB6A]" />
+          </span>
+          <span className="font-bold tracking-wide leading-tight">
+            SNICV
+            <span className="block text-[11px] font-normal text-[#B9CBE6]">
+              Ministère des Transports · Guinée-Bissau
+            </span>
+          </span>
+        </Link>
+        <div className="flex-1" />
+        {user && (
+          <div className="flex items-center gap-3">
+            <div className="text-right text-[13px] leading-tight max-sm:hidden">
+              <b className="font-semibold">
+                {user.prenom} {user.nom}
+              </b>
+              <span className="block text-[11px] text-[#B9CBE6]">Espace usager</span>
+            </div>
+            <span className="grid size-9 place-items-center rounded-full bg-accent text-sm font-bold text-[#3a2c07]">
+              {initiales}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="text-white hover:bg-white/10"
+              title="Se déconnecter"
+            >
+              <LogOut className="size-4" />
+            </Button>
+          </div>
+        )}
+      </header>
+      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">{children}</main>
+    </div>
+  );
+}

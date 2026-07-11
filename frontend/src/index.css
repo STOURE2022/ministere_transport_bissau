@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/* ── Design system SNICV : palette institutionnelle (bleu ministériel + or) ── */
+@theme {
+  --color-background: #f6f8fc;
+  --color-foreground: #0f1b2d;
+
+  --color-card: #ffffff;
+  --color-card-foreground: #0f1b2d;
+
+  --color-primary: #1e5aa8;
+  --color-primary-foreground: #ffffff;
+  --color-primary-deep: #12386e;
+
+  --color-secondary: #eaf1fb;
+  --color-secondary-foreground: #12386e;
+
+  --color-muted: #eef2f8;
+  --color-muted-foreground: #5a6b82;
+  --color-faint: #8494a9;
+
+  --color-accent: #b8891f;
+  --color-accent-foreground: #ffffff;
+
+  --color-border: #e3e9f3;
+  --color-input: #d2dcea;
+  --color-ring: #1e5aa8;
+
+  --color-destructive: #c43d3d;
+  --color-destructive-foreground: #ffffff;
+  --color-success: #1e8e5a;
+  --color-success-foreground: #ffffff;
+  --color-warning: #c6841a;
+
+  --radius: 0.75rem;
+
+  --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
