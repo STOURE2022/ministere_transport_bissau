@@ -3,7 +3,7 @@ from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView
@@ -15,7 +15,7 @@ from apps.core.permissions import IsAdmin, IsAgentOrAdmin, IsStaffRole
 from apps.dossiers.models import Dossier
 from apps.dossiers.permissions import STAFF_ROLES
 
-from .models import Certificat, ResultatScan
+from .models import Certificat, ResultatScan, ScanLog
 from .serializers import (
     CertificatSerializer,
     RevocationSerializer,
@@ -23,7 +23,7 @@ from .serializers import (
     VerificationResultSerializer,
 )
 from .services import emettre_certificat, revoquer_certificat
-from .verification import MESSAGES, verifier_certificat
+from .verification import MESSAGES, verifier_certificat, verifier_par_immatriculation
 
 # Résultats pour lesquels on affiche les données du véhicule (données fiables).
 _RESULTATS_AVEC_DONNEES = {ResultatScan.AUTHENTIQUE, ResultatScan.REVOQUE, ResultatScan.EXPIRE}
@@ -176,4 +176,55 @@ class ScansListView(ListAPIView):
 
     def get_queryset(self):
         certificat = get_object_or_404(Certificat, pk=self.kwargs["uuid"])
-        return certificat.scans.select_related("scanne_par")
+        return certificat.scans.select_related("scanne_par", "certificat")
+
+
+class ScansGlobalListView(ListAPIView):
+    """Historique global des contrôles récents (forces de l'ordre / staff)."""
+
+    serializer_class = ScanLogSerializer
+    permission_classes = [IsAuthenticated, IsStaffRole]
+
+    def get_queryset(self):
+        return ScanLog.objects.select_related("scanne_par", "certificat").all()
+
+
+class VerifyPlaqueView(APIView):
+    """
+    Vérification par NUMÉRO DE PLAQUE (forces de l'ordre) — secours quand le QR
+    est illisible. Retrouve le certificat de l'immatriculation et renvoie son
+    statut. Réservée au personnel : la plaque, contrairement à l'UUID+empreinte
+    du QR, est aisément énumérable.
+    """
+
+    permission_classes = [IsAuthenticated, IsStaffRole]
+    throttle_scope = "verify"
+
+    @extend_schema(
+        parameters=[OpenApiParameter("immatriculation", str, required=True,
+                                     description="Numéro de plaque, ex. « AB 4821 BS »")],
+        responses={200: VerificationResultSerializer},
+    )
+    def get(self, request):
+        numero = request.query_params.get("immatriculation", "")
+        localisation = request.query_params.get("loc", "")
+        if not numero.strip():
+            return Response({"detail": "Paramètre « immatriculation » requis."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        resultat, certificat = verifier_par_immatriculation(
+            numero, user=request.user, request=request, localisation=localisation)
+
+        donnees = (
+            _donnees_publiques(certificat)
+            if certificat is not None and resultat in _RESULTATS_AVEC_DONNEES
+            else None
+        )
+        return Response({
+            "resultat": resultat,
+            "message": MESSAGES[resultat],
+            "methode": "PLAQUE",
+            "immatriculation": " ".join(numero.upper().split()),
+            "verifie_le": timezone.now(),
+            "certificat": donnees,
+        })

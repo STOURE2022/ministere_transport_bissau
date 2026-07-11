@@ -6,7 +6,9 @@ from .views import (
     CertificatPdfView,
     EmettreCertificatView,
     RevoquerCertificatView,
+    ScansGlobalListView,
     ScansListView,
+    VerifyPlaqueView,
     VerifyView,
 )
 
@@ -19,6 +21,10 @@ urlpatterns = [
     path("certificats/<uuid:uuid>/pdf/", CertificatPdfView.as_view(), name="pdf"),
     path("certificats/<uuid:uuid>/revoquer/", RevoquerCertificatView.as_view(), name="revoquer"),
     path("certificats/<uuid:uuid>/scans/", ScansListView.as_view(), name="scans"),
+    # Historique global des contrôles (forces de l'ordre / staff).
+    path("scans/", ScansGlobalListView.as_view(), name="scans-global"),
     # Vérification publique (terrain) — l'URL encodée dans le QR.
     path("verify/<uuid:uuid>/", VerifyView.as_view(), name="verify"),
+    # Vérification par numéro de plaque (secours QR illisible, staff).
+    path("verify-plaque/", VerifyPlaqueView.as_view(), name="verify-plaque"),
 ]

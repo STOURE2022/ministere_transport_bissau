@@ -127,7 +127,7 @@ export default function AgentDossier() {
 
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight tnum">{dossier.numero_dossier}</h1>
+          <h1 className="font-serif text-2xl font-bold tracking-tight tnum">{dossier.numero_dossier}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {dossier.vehicule.marque} {dossier.vehicule.modele} · {dossier.vehicule.annee}
           </p>
@@ -298,9 +298,23 @@ export default function AgentDossier() {
                 <Check ok={verification.assurance_valide} label="Assurance valide" />
                 <Check ok={verification.ct_valide} label="Contrôle technique valide" />
                 <Check ok={!verification.doublon_detecte} label="Aucun doublon" />
-                <div className="mt-2 flex items-center justify-between border-t border-border pt-3">
-                  <span className="text-muted-foreground">Score de fraude</span>
-                  <span className="font-bold tnum">{verification.score_fraude}/100</span>
+                <div className="mt-2 border-t border-border pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Score de fraude</span>
+                    <span className="font-bold tnum">{verification.score_fraude} / 100</span>
+                  </div>
+                  <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={`h-full rounded-full ${
+                        verification.niveau_risque === "ELEVE"
+                          ? "bg-destructive"
+                          : verification.niveau_risque === "MOYEN"
+                            ? "bg-warning"
+                            : "bg-success"
+                      }`}
+                      style={{ width: `${Math.min(100, Math.max(4, verification.score_fraude))}%` }}
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Niveau de risque</span>
@@ -319,7 +333,45 @@ export default function AgentDossier() {
           />
         </div>
       </div>
+
+      <ChaineTraitement statut={dossier.statut} />
     </Layout>
+  );
+}
+
+/* ─────────────────────────── Suite du traitement ─────────────────────────── */
+
+const CHAINE = [
+  { statuts: ["EN_VALIDATION"], titre: "1 · Validation", desc: "Valider, rejeter ou demander un complément." },
+  { statuts: ["VALIDE"], titre: "2 · Immatriculation", desc: "Attribuer une plaque officielle." },
+  { statuts: ["IMMATRICULE"], titre: "3 · Certificat", desc: "Émettre le certificat signé RSA-2048 + QR." },
+] as const;
+
+function ChaineTraitement({ statut }: { statut: string }) {
+  if (["BROUILLON", "SOUMIS", "VERIF_AUTO", "REJETE"].includes(statut)) return null;
+  return (
+    <div className="mt-6">
+      <div className="eyebrow mb-2">Suite du traitement</div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {CHAINE.map((c) => {
+          const actif = (c.statuts as readonly string[]).includes(statut);
+          return (
+            <div
+              key={c.titre}
+              className={`rounded-xl border p-4 ${
+                actif ? "border-accent bg-card" : "border-dashed border-border bg-muted/30"
+              }`}
+            >
+              <div className="eyebrow" style={{ color: actif ? undefined : "var(--color-faint)" }}>
+                {actif ? "Étape en cours" : "Étape"}
+              </div>
+              <div className="mt-1 font-semibold">{c.titre}</div>
+              <div className="mt-0.5 text-[12.5px] text-muted-foreground">{c.desc}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

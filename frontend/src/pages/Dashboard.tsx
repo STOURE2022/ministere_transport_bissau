@@ -24,7 +24,8 @@ export default function Dashboard() {
     <Layout>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Mes dossiers</h1>
+          <div className="eyebrow">Espace usager</div>
+          <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight">Mes dossiers</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Suivez vos demandes d'immatriculation en temps réel.
           </p>

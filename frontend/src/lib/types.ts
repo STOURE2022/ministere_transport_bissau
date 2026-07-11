@@ -174,12 +174,17 @@ export interface VerificationResult {
   message: string;
   verifie_le: string;
   certificat: CertificatPublic | null;
+  methode?: "QR" | "PLAQUE";
+  immatriculation?: string;
 }
 
 export interface ScanLog {
   id: string;
   resultat: ResultatScan;
   resultat_libelle: string;
+  methode: "QR" | "PLAQUE";
+  methode_libelle: string;
+  immatriculation: string | null;
   scanne_par: string | null;
   scanne_par_nom: string | null;
   ip: string | null;

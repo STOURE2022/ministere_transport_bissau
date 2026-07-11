@@ -39,12 +39,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-20 flex h-15 items-center gap-4 bg-primary-deep px-5 py-3 text-white shadow-sm">
+      <header className="sticky top-0 z-20 flex h-15 items-center gap-4 bg-navy px-5 py-3 text-white shadow-sm">
         <Link to={accueil} className="flex items-center gap-3">
           <span className="grid size-9 place-items-center rounded-lg border border-white/20 bg-white/10">
             <ShieldCheck className="size-5 text-[#EBCB6A]" />
           </span>
-          <span className="font-bold tracking-wide leading-tight">
+          <span className="font-serif font-bold tracking-wide leading-tight">
             SNICV
             <span className="block text-[11px] font-normal text-[#B9CBE6]">
               Ministère des Transports · Guinée-Bissau

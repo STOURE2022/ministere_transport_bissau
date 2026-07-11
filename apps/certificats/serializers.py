@@ -55,11 +55,14 @@ class VerificationResultSerializer(serializers.Serializer):
 
 class ScanLogSerializer(serializers.ModelSerializer):
     resultat_libelle = serializers.CharField(source="get_resultat_display", read_only=True)
+    methode_libelle = serializers.CharField(source="get_methode_display", read_only=True)
     scanne_par_nom = serializers.SerializerMethodField()
+    immatriculation = serializers.SerializerMethodField()
 
     class Meta:
         model = ScanLog
-        fields = ("id", "resultat", "resultat_libelle", "scanne_par", "scanne_par_nom",
+        fields = ("id", "resultat", "resultat_libelle", "methode", "methode_libelle",
+                  "immatriculation", "scanne_par", "scanne_par_nom",
                   "ip", "localisation", "date_scan")
         read_only_fields = fields
 
@@ -67,3 +70,8 @@ class ScanLogSerializer(serializers.ModelSerializer):
         if obj.scanne_par is None:
             return None
         return f"{obj.scanne_par.prenom} {obj.scanne_par.nom}"
+
+    def get_immatriculation(self, obj) -> str | None:
+        if obj.certificat is None:
+            return None
+        return (obj.certificat.donnees_snapshot or {}).get("immatriculation")

@@ -103,7 +103,8 @@ export default function AgentDashboard() {
   return (
     <Layout>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">File de validation</h1>
+        <div className="eyebrow">Espace agent · Instruction des dossiers</div>
+        <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight">File de validation</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Traitez les demandes d'immatriculation à chaque étape du cycle.
         </p>

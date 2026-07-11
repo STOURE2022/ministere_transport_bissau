@@ -269,3 +269,109 @@ class ScansHistoriqueTests(CertificatBase):
         self.client.force_authenticate(self.usager)
         resp = self.client.get(reverse("v1:certificats:scans", args=[cid]))
         self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class VerificationPlaqueTests(CertificatBase):
+    def setUp(self):
+        super().setUp()
+        cache.clear()  # isole le throttle "verify"
+        self.force = creer_user("police@snicv.gw", role="FORCE_ORDRE", tel="+245955000008")
+
+    def _cert(self) -> Certificat:
+        dossier = self._dossier_immatricule()
+        self.client.force_authenticate(self.agent)
+        cid = self.client.post(reverse("v1:certificats:emettre", args=[dossier.id])).data["id"]
+        return Certificat.objects.get(id=cid)
+
+    def _get(self, plaque):
+        return self.client.get(reverse("v1:certificats:verify-plaque"),
+                               {"immatriculation": plaque})
+
+    def test_plaque_authentique(self):
+        self._cert()
+        self.client.force_authenticate(self.force)
+        resp = self._get("AB 4821 BS")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["resultat"], "AUTHENTIQUE")
+        self.assertEqual(resp.data["methode"], "PLAQUE")
+        self.assertEqual(resp.data["certificat"]["immatriculation"], "AB 4821 BS")
+
+    def test_plaque_insensible_casse_et_espaces(self):
+        self._cert()
+        self.client.force_authenticate(self.force)
+        resp = self._get("  ab 4821   bs ")
+        self.assertEqual(resp.data["resultat"], "AUTHENTIQUE")
+
+    def test_plaque_revoquee(self):
+        cert = self._cert()
+        cert.statut = StatutCertificat.REVOQUE
+        cert.save(update_fields=["statut"])
+        self.client.force_authenticate(self.force)
+        resp = self._get("AB 4821 BS")
+        self.assertEqual(resp.data["resultat"], "REVOQUE")
+
+    def test_plaque_expiree_bascule_statut(self):
+        cert = self._cert()
+        cert.date_expiration = timezone.now() - datetime.timedelta(days=1)
+        cert.save(update_fields=["date_expiration"])
+        self.client.force_authenticate(self.force)
+        resp = self._get("AB 4821 BS")
+        self.assertEqual(resp.data["resultat"], "EXPIRE")
+        cert.refresh_from_db()
+        self.assertEqual(cert.statut, StatutCertificat.EXPIRE)
+
+    def test_plaque_introuvable(self):
+        self.client.force_authenticate(self.force)
+        resp = self._get("ZZ 9999 BS")
+        self.assertEqual(resp.data["resultat"], "INTROUVABLE")
+        self.assertIsNone(resp.data["certificat"])
+
+    def test_plaque_journalise_le_controle(self):
+        self._cert()
+        self.client.force_authenticate(self.force)
+        self._get("AB 4821 BS")
+        self.assertTrue(
+            ScanLog.objects.filter(methode="PLAQUE", resultat="AUTHENTIQUE",
+                                   scanne_par=self.force).exists()
+        )
+
+    def test_plaque_refusee_sans_authentification(self):
+        self._cert()
+        self.client.force_authenticate(None)
+        resp = self._get("AB 4821 BS")
+        self.assertIn(resp.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+
+    def test_plaque_refusee_a_l_usager(self):
+        self._cert()
+        self.client.force_authenticate(self.usager)
+        resp = self._get("AB 4821 BS")
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_parametre_manquant(self):
+        self.client.force_authenticate(self.force)
+        resp = self.client.get(reverse("v1:certificats:verify-plaque"))
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ScansGlobalTests(CertificatBase):
+    def setUp(self):
+        super().setUp()
+        cache.clear()
+
+    def test_historique_global_pour_force_ordre(self):
+        dossier = self._dossier_immatricule()
+        self.client.force_authenticate(self.agent)
+        cid = self.client.post(reverse("v1:certificats:emettre", args=[dossier.id])).data["id"]
+        self.client.force_authenticate(None)
+        self.client.get(reverse("v1:certificats:verify", args=[cid]))  # un scan
+        force = creer_user("police2@snicv.gw", role="FORCE_ORDRE", tel="+245955000010")
+        self.client.force_authenticate(force)
+        resp = self.client.get(reverse("v1:certificats:scans-global"))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(resp.data["count"], 1)
+        self.assertIn("methode", resp.data["results"][0])
+
+    def test_historique_global_refuse_a_l_usager(self):
+        self.client.force_authenticate(self.usager)
+        resp = self.client.get(reverse("v1:certificats:scans-global"))
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)

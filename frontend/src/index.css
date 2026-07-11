@@ -11,6 +11,7 @@
   --color-primary: #1e5aa8;
   --color-primary-foreground: #ffffff;
   --color-primary-deep: #12386e;
+  --color-navy: #0d2748;
 
   --color-secondary: #eaf1fb;
   --color-secondary-foreground: #12386e;
@@ -21,6 +22,9 @@
 
   --color-accent: #b8891f;
   --color-accent-foreground: #ffffff;
+  --color-accent-soft: #d8b45e;
+  --color-paper: #f6f3ec;
+  --color-paper-deep: #efe8d6;
 
   --color-border: #e3e9f3;
   --color-input: #d2dcea;
@@ -34,8 +38,17 @@
 
   --radius: 0.75rem;
 
-  --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+}
+
+/* Libellé « eyebrow » : petite majuscule espacée dorée (identité maquettes) */
+.eyebrow {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
 }
 
 * {

@@ -64,6 +64,11 @@ class ResultatScan(models.TextChoices):
     INTROUVABLE = "INTROUVABLE", "Introuvable"
 
 
+class MethodeScan(models.TextChoices):
+    QR = "QR", "QR"
+    PLAQUE = "PLAQUE", "Immatriculation"
+
+
 class ScanLog(models.Model):
     """
     Trace chaque vérification de QR (étape 7). Conserve l'UUID scanné même si
@@ -77,6 +82,9 @@ class ScanLog(models.Model):
     )
     uuid_scanne = models.UUIDField("UUID scanné", db_index=True)
     resultat = models.CharField("Résultat", max_length=12, choices=ResultatScan.choices)
+    methode = models.CharField(
+        "Méthode", max_length=8, choices=MethodeScan.choices, default=MethodeScan.QR,
+    )
     scanne_par = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
         related_name="scans", verbose_name="Scanné par",
