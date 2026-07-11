@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type Lang = "fr" | "pt";
@@ -19,14 +19,19 @@ interface Ctx {
 const LangContext = createContext<Ctx>({ lang: "fr", setLang: () => {}, t: (s) => s, n: (v) => String(v) });
 
 export function LangProvider({ children }: { children: React.ReactNode }) {
+  // Portugais par défaut (langue officielle de Guinée-Bissau) ; l'utilisateur
+  // peut basculer en français, choix mémorisé dans localStorage.
   const [lang, setLangState] = useState<Lang>(() => {
     const s = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE) : null;
-    return s === "pt" || s === "fr" ? s : "fr";
+    return s === "pt" || s === "fr" ? s : "pt";
   });
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const setLang = useCallback((l: Lang) => {
     localStorage.setItem(STORAGE, l);
-    document.documentElement.lang = l === "pt" ? "pt" : "fr";
     setLangState(l);
   }, []);
 

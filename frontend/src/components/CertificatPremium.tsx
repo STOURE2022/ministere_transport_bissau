@@ -105,7 +105,7 @@ export function CertificatPremium({
       <div className="grid gap-6 p-6 md:grid-cols-[1fr_auto]">
         {/* Colonne données */}
         <div>
-          <PlaqueImmatriculation numero={champ(snap, "immatriculation")} className="mx-0 max-w-[260px]" />
+          <PlaqueImmatriculation numero={champ(snap, "immatriculation")} className="mx-0" />
           <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3.5 text-sm">
             <Bloc label={t("Titulaire")} valeur={champ(snap, "proprietaire")} />
             <Bloc label={t("Véhicule")} valeur={marqueModele} />

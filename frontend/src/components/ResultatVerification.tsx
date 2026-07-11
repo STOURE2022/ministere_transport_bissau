@@ -76,7 +76,7 @@ export function ResultatVerification({ res }: { res: VerificationResult }) {
 
           <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
             {cert.immatriculation && (
-              <PlaqueImmatriculation numero={cert.immatriculation} className="max-w-[220px]" />
+              <PlaqueImmatriculation numero={cert.immatriculation} />
             )}
             <dl className="grid grid-cols-2 gap-x-5 gap-y-3.5">
               {cert.proprietaire && <Info label={t("Titulaire")} valeur={cert.proprietaire} />}

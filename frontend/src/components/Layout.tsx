@@ -47,14 +47,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-20 flex h-15 items-center gap-4 bg-navy px-5 py-3 text-white shadow-sm">
-        <Link to={accueil} className="flex items-center gap-3">
-          <span className="grid size-9 place-items-center rounded-lg border border-white/20 bg-white/10">
+      <header className="sticky top-0 z-20 flex h-15 items-center gap-2 bg-navy px-3 text-white shadow-sm sm:gap-4 sm:px-5">
+        <Link to={accueil} className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-white/20 bg-white/10">
             <ShieldCheck className="size-5 text-[#EBCB6A]" />
           </span>
-          <span className="font-serif font-bold tracking-wide leading-tight">
+          <span className="min-w-0 font-serif font-bold tracking-wide leading-tight">
             SNICV
-            <span className="block text-[11px] font-normal text-[#B9CBE6]">
+            <span className="block truncate text-[11px] font-normal text-[#B9CBE6] max-[420px]:hidden">
               {t("Ministère des Transports · Guinée-Bissau")}
             </span>
           </span>
@@ -80,31 +80,31 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="flex-1" />
-        <LangSwitcher className="mr-1 text-white" />
+        <LangSwitcher className="text-white" />
         <Link
           to="/accueil"
           title={t("Page d'accueil")}
-          className="mr-1 inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/5 px-2.5 py-1.5 text-[13px] font-medium text-[#B9CBE6] transition-colors hover:bg-white/15 hover:text-white"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/20 bg-white/5 px-2.5 py-1.5 text-[13px] font-medium text-[#B9CBE6] transition-colors hover:bg-white/15 hover:text-white"
         >
           <Home className="size-4" />
           <span className="max-sm:hidden">{t("Accueil")}</span>
         </Link>
         {user && (
-          <div className="flex items-center gap-3">
-            <div className="text-right text-[13px] leading-tight max-sm:hidden">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="text-right text-[13px] leading-tight max-md:hidden">
               <b className="font-semibold">
                 {user.prenom} {user.nom}
               </b>
               <span className="block text-[11px] text-[#B9CBE6]">{t(ROLE_LABEL[user.role])}</span>
             </div>
-            <span className="grid size-9 place-items-center rounded-full bg-accent text-sm font-bold text-[#3a2c07]">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-sm font-bold text-[#3a2c07]">
               {initiales}
             </span>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleLogout}
-              className="text-white hover:bg-white/10"
+              className="shrink-0 text-white hover:bg-white/10"
               title={t("Se déconnecter")}
             >
               <LogOut className="size-4" />
@@ -112,7 +112,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </header>
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">{children}</main>
+
+      {/* Navigation par rôle sur mobile (les liens du header sont masqués < md) */}
+      {liens.length > 0 && (
+        <nav className="sticky top-15 z-10 flex gap-1 overflow-x-auto border-b border-border bg-card px-3 py-2 md:hidden">
+          {liens.map((l) => {
+            const actif =
+              l.to === accueil ? location.pathname === l.to : location.pathname.startsWith(l.to);
+            return (
+              <Link
+                key={l.to}
+                to={l.to}
+                className={cn(
+                  "shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors",
+                  actif ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {t(l.label)}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+
+      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </div>
   );
 }
