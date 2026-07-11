@@ -17,6 +17,7 @@ whitenoise>=6.7         # service des fichiers statiques
 # Sécurité / certificat (utilisés dès l'étape 6 — installés dès maintenant)
 cryptography>=43.0        # signature RSA du certificat
 qrcode[pil]>=7.4          # génération du QR code
+reportlab>=4.0            # composition vectorielle du PDF du certificat
 
 # Tests
 pytest>=8.3
