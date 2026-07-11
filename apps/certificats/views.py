@@ -34,9 +34,16 @@ def _accessible(user, certificat) -> bool:
 
 
 class EmettreCertificatView(APIView):
-    """Émet le certificat QR d'un dossier immatriculé (agent / admin)."""
+    """
+    Certificat QR d'un dossier.
+    - POST : émission (agent / admin) sur un dossier immatriculé.
+    - GET  : récupère le certificat existant du dossier (propriétaire ou staff).
+    """
 
-    permission_classes = [IsAuthenticated, IsAgentOrAdmin]
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsAuthenticated(), IsAgentOrAdmin()]
+        return [IsAuthenticated()]
 
     @extend_schema(request=None,
                    responses={201: CertificatSerializer,
@@ -49,6 +56,19 @@ class EmettreCertificatView(APIView):
         data = CertificatSerializer(certificat, context={"request": request}).data
         data["message"] = message
         return Response(data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(responses={200: CertificatSerializer,
+                              404: OpenApiResponse(description="Aucun certificat pour ce dossier")})
+    def get(self, request, dossier_id):
+        dossier = get_object_or_404(Dossier, pk=dossier_id)
+        if request.user.role not in STAFF_ROLES and dossier.usager_id != request.user.id:
+            raise NotFound()
+        certificat = (
+            Certificat.objects.filter(dossier=dossier).order_by("-date_emission").first()
+        )
+        if certificat is None:
+            raise NotFound("Aucun certificat pour ce dossier.")
+        return Response(CertificatSerializer(certificat, context={"request": request}).data)
 
 
 class CertificatDetailView(APIView):

@@ -222,8 +222,13 @@ SNICV_PUBLIC_KEY_PATH = env(
 # Prioritaires sur les chemins de fichiers ci-dessus si définies.
 SNICV_PRIVATE_KEY_B64 = env("SNICV_PRIVATE_KEY_B64", default="")
 SNICV_PUBLIC_KEY_B64 = env("SNICV_PUBLIC_KEY_B64", default="")
-# URL de base encodée dans le QR (vers l'endpoint de vérification, étape 7).
-SNICV_VERIFY_BASE_URL = env("SNICV_VERIFY_BASE_URL", default="http://localhost:8000/api/v1")
+# URL de base encodée dans le QR : elle doit pointer vers la PAGE FRONT de
+# vérification (/verify/<uuid>/?h=...), pas vers l'API JSON. La page front
+# appelle ensuite l'endpoint public de vérification. Surchargeable par env.
+SNICV_VERIFY_BASE_URL = env(
+    "SNICV_VERIFY_BASE_URL",
+    default="https://surprising-vision-production.up.railway.app",
+)
 # Durée de validité du certificat (renouvellement en étape 8).
 CERTIFICAT_VALIDITE_ANNEES = env.int("CERTIFICAT_VALIDITE_ANNEES", default=1)
 

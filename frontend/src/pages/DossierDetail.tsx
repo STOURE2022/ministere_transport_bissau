@@ -1,25 +1,31 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
+  Download,
   FileCheck2,
   Loader2,
   Send,
+  ShieldCheck,
   Upload,
 } from "lucide-react";
-import { api, messageErreur } from "@/lib/api";
+import { api, messageErreur, telechargerCertificatPdf } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import {
   DOCUMENTS_REQUIS,
   TYPE_VEHICULE_LABEL,
+  type Certificat,
   type DossierDetail as Dossier,
+  type Immatriculation,
   type Verification,
 } from "@/lib/types";
 import { Layout } from "@/components/Layout";
 import { Stepper } from "@/components/Stepper";
 import { StatutBadge } from "@/components/StatutBadge";
+import { PlaqueImmatriculation } from "@/components/PlaqueImmatriculation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +35,8 @@ export default function DossierDetail() {
   const { id } = useParams<{ id: string }>();
   const [dossier, setDossier] = useState<Dossier | null>(null);
   const [verification, setVerification] = useState<Verification | null>(null);
+  const [immat, setImmat] = useState<Immatriculation | null>(null);
+  const [certificat, setCertificat] = useState<Certificat | null>(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [problemes, setProblemes] = useState<string[]>([]);
@@ -43,6 +51,18 @@ export default function DossierDetail() {
         .get<Verification>(`/dossiers/${id}/verification/`)
         .then((r) => setVerification(r.data))
         .catch(() => setVerification(null));
+    }
+    if (["IMMATRICULE", "CERTIFIE", "ARCHIVE"].includes(data.statut)) {
+      api
+        .get<Immatriculation>(`/dossiers/${id}/immatriculation/`)
+        .then((r) => setImmat(r.data))
+        .catch(() => setImmat(null));
+    }
+    if (["CERTIFIE", "ARCHIVE"].includes(data.statut)) {
+      api
+        .get<Certificat>(`/dossiers/${id}/certificat/`)
+        .then((r) => setCertificat(r.data))
+        .catch(() => setCertificat(null));
     }
   }, [id]);
 
@@ -202,8 +222,12 @@ export default function DossierDetail() {
           )}
         </div>
 
-        {/* Panneau latéral : véhicule + vérification */}
+        {/* Panneau latéral : certificat + véhicule + vérification */}
         <div className="space-y-5">
+          {(immat || certificat) && (
+            <CarteCertificatUsager immat={immat} certificat={certificat} />
+          )}
+
           <Card>
             <CardHeader className="border-b border-border">
               <CardTitle>Véhicule</CardTitle>
@@ -267,6 +291,76 @@ function Check({ ok, label }: { ok: boolean; label: string }) {
       )}
       <span>{label}</span>
     </div>
+  );
+}
+
+function CarteCertificatUsager({
+  immat,
+  certificat,
+}: {
+  immat: Immatriculation | null;
+  certificat: Certificat | null;
+}) {
+  const [tel, setTel] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const revoque = certificat?.statut === "REVOQUE";
+
+  async function telecharger() {
+    if (!certificat) return;
+    setTel(true);
+    setErreur(null);
+    try {
+      await telechargerCertificatPdf(certificat.id);
+    } catch {
+      setErreur("PDF momentanément indisponible.");
+    } finally {
+      setTel(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="border-b border-border">
+        <CardTitle className="flex items-center gap-2">
+          <ShieldCheck className={`size-4 ${revoque ? "text-destructive" : "text-success"}`} />
+          {certificat ? (revoque ? "Certificat révoqué" : "Certificat délivré") : "Immatriculation"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-5">
+        {immat && <PlaqueImmatriculation numero={immat.numero} />}
+
+        {certificat && (
+          <>
+            <div className="mt-4 flex flex-col items-center gap-2 rounded-xl border border-border bg-muted/40 p-4">
+              <div className={revoque ? "opacity-40 grayscale" : ""}>
+                <QRCodeSVG value={certificat.qr_payload} size={150} level="M" />
+              </div>
+              <p className="text-center text-[11px] text-muted-foreground">
+                Présentez ce QR lors d'un contrôle
+              </p>
+            </div>
+            <dl className="mt-4 space-y-2 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt className="text-faint">Valable jusqu'au</dt>
+                <dd className="text-right font-medium tnum">
+                  {formatDate(certificat.date_expiration)}
+                </dd>
+              </div>
+            </dl>
+            <Button variant="outline" className="mt-4 w-full" onClick={telecharger} disabled={tel}>
+              {tel ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+              Télécharger le certificat
+            </Button>
+            {erreur && <p className="mt-2 text-[12.5px] text-destructive">{erreur}</p>}
+            {revoque && certificat.motif_revocation && (
+              <p className="mt-3 rounded-lg bg-[#FBE7E7] px-3 py-2 text-[13px] text-[#9a2f2f]">
+                {certificat.motif_revocation}
+              </p>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

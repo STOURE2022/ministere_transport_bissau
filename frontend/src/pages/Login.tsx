@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { messageErreur } from "@/lib/api";
+import { accueilPourRole } from "@/lib/types";
 import { AuthShell, FieldError } from "@/components/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +24,8 @@ export default function Login() {
     setErreur(null);
     setChargement(true);
     try {
-      await login(email, password);
-      navigate("/");
+      const u = await login(email, password);
+      navigate(accueilPourRole(u.role));
     } catch (err) {
       setErreur(messageErreur(err, "E-mail ou mot de passe incorrect."));
     } finally {

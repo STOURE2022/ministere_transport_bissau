@@ -46,17 +46,28 @@ class DocumentSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+class UsagerMiniSerializer(serializers.Serializer):
+    """Résumé du demandeur affiché côté agent (lecture seule)."""
+
+    id = serializers.UUIDField(read_only=True)
+    nom = serializers.CharField(read_only=True)
+    prenom = serializers.CharField(read_only=True)
+    email = serializers.EmailField(read_only=True)
+    telephone = serializers.CharField(read_only=True)
+
+
 class DossierListSerializer(serializers.ModelSerializer):
     """Vue liste : résumé pour les tableaux (dashboard, suivi usager)."""
 
     vehicule = VehiculeSerializer(read_only=True)
+    usager = UsagerMiniSerializer(read_only=True)
     statut_libelle = serializers.CharField(source="get_statut_display", read_only=True)
     nb_documents = serializers.IntegerField(source="documents.count", read_only=True)
 
     class Meta:
         model = Dossier
         fields = (
-            "id", "numero_dossier", "statut", "statut_libelle", "vehicule",
+            "id", "numero_dossier", "statut", "statut_libelle", "vehicule", "usager",
             "nb_documents", "date_creation", "date_soumission",
         )
 
@@ -92,6 +103,7 @@ class DossierDetailSerializer(serializers.ModelSerializer):
     """Vue détail : véhicule + pièces + pièces obligatoires manquantes."""
 
     vehicule = VehiculeSerializer(read_only=True)
+    usager = UsagerMiniSerializer(read_only=True)
     documents = DocumentSerializer(many=True, read_only=True)
     statut_libelle = serializers.CharField(source="get_statut_display", read_only=True)
     documents_requis_manquants = serializers.SerializerMethodField()
@@ -100,7 +112,7 @@ class DossierDetailSerializer(serializers.ModelSerializer):
         model = Dossier
         fields = (
             "id", "numero_dossier", "statut", "statut_libelle", "motif_rejet",
-            "vehicule", "documents", "documents_requis_manquants",
+            "vehicule", "usager", "documents", "documents_requis_manquants",
             "date_creation", "date_soumission",
         )
         read_only_fields = fields

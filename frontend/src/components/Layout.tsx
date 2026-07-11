@@ -1,11 +1,32 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { accueilPourRole, ROLE_LABEL } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+
+interface NavLink {
+  to: string;
+  label: string;
+}
+
+function liensPourRole(role: string): NavLink[] {
+  if (role === "AGENT" || role === "ADMIN") {
+    return [{ to: "/agent", label: "File de validation" }];
+  }
+  if (role === "FORCE_ORDRE") {
+    return [{ to: "/controle", label: "Contrôle" }];
+  }
+  return [
+    { to: "/", label: "Mes dossiers" },
+    { to: "/dossiers/nouveau", label: "Nouveau dossier" },
+  ];
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   async function handleLogout() {
     await logout();
@@ -13,11 +34,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }
 
   const initiales = user ? `${user.prenom[0] ?? ""}${user.nom[0] ?? ""}`.toUpperCase() : "";
+  const accueil = user ? accueilPourRole(user.role) : "/";
+  const liens = user ? liensPourRole(user.role) : [];
 
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 flex h-15 items-center gap-4 bg-primary-deep px-5 py-3 text-white shadow-sm">
-        <Link to="/" className="flex items-center gap-3">
+        <Link to={accueil} className="flex items-center gap-3">
           <span className="grid size-9 place-items-center rounded-lg border border-white/20 bg-white/10">
             <ShieldCheck className="size-5 text-[#EBCB6A]" />
           </span>
@@ -28,6 +51,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </span>
           </span>
         </Link>
+
+        <nav className="ml-4 hidden items-center gap-1 md:flex">
+          {liens.map((l) => {
+            const actif =
+              l.to === accueil ? location.pathname === l.to : location.pathname.startsWith(l.to);
+            return (
+              <Link
+                key={l.to}
+                to={l.to}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors",
+                  actif ? "bg-white/15 text-white" : "text-[#B9CBE6] hover:bg-white/10 hover:text-white"
+                )}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
+        </nav>
+
         <div className="flex-1" />
         {user && (
           <div className="flex items-center gap-3">
@@ -35,7 +78,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <b className="font-semibold">
                 {user.prenom} {user.nom}
               </b>
-              <span className="block text-[11px] text-[#B9CBE6]">Espace usager</span>
+              <span className="block text-[11px] text-[#B9CBE6]">{ROLE_LABEL[user.role]}</span>
             </div>
             <span className="grid size-9 place-items-center rounded-full bg-accent text-sm font-bold text-[#3a2c07]">
               {initiales}

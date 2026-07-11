@@ -66,6 +66,22 @@ api.interceptors.response.use(
   }
 );
 
+/**
+ * Télécharge le PDF d'un certificat via l'endpoint authentifié (le fichier
+ * média n'est pas servi publiquement en production) et déclenche le download.
+ */
+export async function telechargerCertificatPdf(uuid: string): Promise<void> {
+  const { data } = await api.get(`/certificats/${uuid}/pdf/`, { responseType: "blob" });
+  const url = URL.createObjectURL(data as Blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `certificat-${uuid}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 /** Extrait un message d'erreur lisible d'une réponse DRF. */
 export function messageErreur(error: unknown, defaut = "Une erreur est survenue."): string {
   const err = error as AxiosError<Record<string, unknown>>;

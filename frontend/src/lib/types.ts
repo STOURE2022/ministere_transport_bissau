@@ -1,5 +1,19 @@
 export type Role = "USAGER" | "AGENT" | "FORCE_ORDRE" | "ADMIN";
 
+export const ROLE_LABEL: Record<Role, string> = {
+  USAGER: "Espace usager",
+  AGENT: "Espace agent",
+  FORCE_ORDRE: "Contrôle routier",
+  ADMIN: "Administration",
+};
+
+/** Page d'accueil selon le rôle (après connexion). */
+export function accueilPourRole(role: Role): string {
+  if (role === "AGENT" || role === "ADMIN") return "/agent";
+  if (role === "FORCE_ORDRE") return "/controle";
+  return "/";
+}
+
 export interface User {
   id: string;
   email: string;
@@ -23,6 +37,14 @@ export type StatutDossier =
   | "CERTIFIE"
   | "ARCHIVE";
 
+export interface UsagerMini {
+  id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+}
+
 export interface Vehicule {
   id?: string;
   vin: string;
@@ -40,6 +62,7 @@ export interface DossierListItem {
   statut: StatutDossier;
   statut_libelle: string;
   vehicule: Vehicule;
+  usager?: UsagerMini;
   nb_documents: number;
   date_creation: string;
   date_soumission: string | null;
@@ -63,6 +86,7 @@ export interface DossierDetail {
   statut_libelle: string;
   motif_rejet: string;
   vehicule: Vehicule;
+  usager?: UsagerMini;
   documents: DocumentItem[];
   documents_requis_manquants: string[];
   date_creation: string;
@@ -84,6 +108,83 @@ export interface Paginated<T> {
   next: string | null;
   previous: string | null;
   results: T[];
+}
+
+/* ── Étape 4 : décisions agent ── */
+export interface ValidationDecision {
+  id: string;
+  action: string;
+  action_libelle: string;
+  agent: string | null;
+  agent_nom: string | null;
+  commentaire: string;
+  date_creation: string;
+}
+
+/* ── Étape 5 : immatriculation ── */
+export interface Immatriculation {
+  numero: string;
+  serie_plaque: string;
+  vehicule_uuid: string;
+  agent_nom: string | null;
+  date_attribution: string;
+}
+
+/* ── Étape 6 : certificat QR ── */
+export type StatutCertificat = "ACTIF" | "SUSPENDU" | "REVOQUE" | "EXPIRE";
+
+export interface Certificat {
+  id: string;
+  dossier: string;
+  statut: StatutCertificat;
+  statut_libelle: string;
+  est_valide: boolean;
+  donnees_snapshot: Record<string, unknown>;
+  hash_sha256: string;
+  signature_rsa: string;
+  qr_payload: string;
+  pdf_url: string | null;
+  date_emission: string;
+  date_expiration: string;
+  motif_revocation: string;
+}
+
+/* ── Étape 7 : vérification QR temps réel ── */
+export type ResultatScan =
+  | "AUTHENTIQUE"
+  | "FALSIFIE"
+  | "REVOQUE"
+  | "EXPIRE"
+  | "INTROUVABLE";
+
+export interface CertificatPublic {
+  immatriculation: string | null;
+  proprietaire: string | null;
+  marque_modele: string | null;
+  annee: number | null;
+  statut: string;
+  assurance_echeance: string | null;
+  ct_echeance: string | null;
+  date_emission: string;
+  date_expiration: string;
+}
+
+export interface VerificationResult {
+  resultat: ResultatScan;
+  message: string;
+  verifie_le: string;
+  certificat: CertificatPublic | null;
+}
+
+export interface ScanLog {
+  id: string;
+  resultat: ResultatScan;
+  resultat_libelle: string;
+  scanne_par: string | null;
+  scanne_par_nom: string | null;
+  ip: string | null;
+  localisation: string;
+  date_scan: string;
 }
 
 export const ENERGIES = ["ESSENCE", "DIESEL", "ELECTRIQUE", "HYBRIDE", "GPL"] as const;
