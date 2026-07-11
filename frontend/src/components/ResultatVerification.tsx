@@ -5,6 +5,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShieldX,
+  Siren,
 } from "lucide-react";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import type { ResultatScan, VerificationResult } from "@/lib/types";
@@ -34,6 +35,22 @@ export function ResultatVerification({ res }: { res: VerificationResult }) {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_20px_50px_rgba(13,39,72,.16)]">
+      {/* Alerte véhicule signalé (volé / recherché / opposition) — priorité maximale */}
+      {res.alerte && (
+        <div className="flex items-center gap-3 bg-[#a1201f] px-6 py-4 text-white">
+          <Siren className="size-7 shrink-0 animate-pulse" />
+          <div className="min-w-0">
+            <div className="font-serif text-lg font-bold tracking-tight">
+              ⚠ {res.alerte.type_libelle.toUpperCase()}
+            </div>
+            <div className="text-[13px] opacity-95">
+              {res.alerte.motif || "Ce véhicule fait l'objet d'un signalement actif."}
+              {res.alerte.reference ? ` · Réf. ${res.alerte.reference}` : ""}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bandeau de résultat */}
       <div className={`flex items-center gap-4 px-6 py-6 text-white ${cfg.bandeau}`}>
         <span className="grid size-14 shrink-0 place-items-center rounded-full bg-white/15">

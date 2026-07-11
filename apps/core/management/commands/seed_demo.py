@@ -21,6 +21,8 @@ from apps.certificats.services import emettre_certificat
 from apps.dossiers.models import Document, Dossier, TypeDocument, Vehicule
 from apps.dossiers.services import generer_numero_dossier, soumettre_dossier
 from apps.immatriculations.services import attribuer_immatriculation
+from apps.signalements.models import TypeSignalement
+from apps.signalements.services import signaler_vehicule
 from apps.validations.services import valider_dossier
 from apps.verifications.services import lancer_verification
 
@@ -35,8 +37,10 @@ COMPTES = [
 ]
 
 # (vin, marque, modèle, année, énergie, type, cible_statut)
+# CERTIFIE_VOLE : véhicule certifié PUIS signalé volé (démo de l'alerte au contrôle).
 VEHICULES = [
     ("VF1RFB00X66512345", "Toyota", "Hilux", 2019, "DIESEL", "UTILITAIRE", "CERTIFIE"),
+    ("JN1TANT31U0123456", "Nissan", "Navara", 2017, "DIESEL", "UTILITAIRE", "CERTIFIE_VOLE"),
     ("VF3CCHMZ6GT024518", "Peugeot", "208", 2016, "ESSENCE", "VP", "EN_VALIDATION"),
     ("MALA851CLMM298471", "Hyundai", "Grand i10", 2021, "ESSENCE", "VP", "EN_VALIDATION"),
     ("WDB9066331S123456", "Mercedes", "Sprinter", 2015, "DIESEL", "UTILITAIRE", "VALIDE"),
@@ -69,18 +73,23 @@ class Command(BaseCommand):
         if Dossier.objects.filter(usager__in=usagers).exists():
             self.stdout.write(self.style.WARNING(
                 "Des dossiers de démo existent déjà. Utilisez --reset pour les régénérer."))
-            self._resume(comptes, None)
+            self._resume(comptes, None, None)
             return
 
-        cert_plaque = None
+        cert_plaque = vole_plaque = None
+        force = comptes["police@snicv.gw"]
         for i, (vin, marque, modele, annee, energie, type_v, cible) in enumerate(VEHICULES):
             usager = usagers[i % len(usagers)]
-            plaque = self._construire(usager, agent, vin, marque, modele,
-                                      annee, energie, type_v, cible)
+            veh = self._construire(usager, agent, vin, marque, modele, annee, energie, type_v, cible)
+            plaque = getattr(getattr(veh, "immatriculation", None), "numero", None)
             if cible == "CERTIFIE":
                 cert_plaque = plaque
+            elif cible == "CERTIFIE_VOLE":
+                signaler_vehicule(veh, force, type=TypeSignalement.VOLE, reference="PV-2026-0142",
+                                  motif="Véhicule déclaré volé à Bissau (démonstration).")
+                vole_plaque = plaque
 
-        self._resume(comptes, cert_plaque)
+        self._resume(comptes, cert_plaque, vole_plaque)
 
     # ── création des comptes ──
     def _comptes(self) -> dict[str, User]:
@@ -117,31 +126,33 @@ class Command(BaseCommand):
                                 fichier=_pdf("facture.pdf"), date_debut=passe)
 
         if cible == "BROUILLON":
-            return None
+            return veh
 
         # Soumission + vérification automatique.
         soumettre_dossier(dossier)
         lancer_verification(dossier)
         dossier.refresh_from_db()
         if cible == "EN_VALIDATION":
-            return None
+            return veh
 
         valider_dossier(dossier, agent, "Dossier conforme — pièces vérifiées.")
         dossier.refresh_from_db()
         if cible == "VALIDE":
-            return None
+            return veh
 
-        _, _, immat = attribuer_immatriculation(dossier, agent)
+        attribuer_immatriculation(dossier, agent)
         dossier.refresh_from_db()
         if cible == "IMMATRICULE":
-            return immat.numero if immat else None
+            return veh
 
-        ok, _, cert = emettre_certificat(dossier, agent)
+        # CERTIFIE et CERTIFIE_VOLE : émission du certificat.
+        emettre_certificat(dossier, agent)
         dossier.refresh_from_db()
-        return (cert.donnees_snapshot or {}).get("immatriculation") if ok else None
+        veh.refresh_from_db()
+        return veh
 
     # ── résumé lisible ──
-    def _resume(self, comptes, cert_plaque):
+    def _resume(self, comptes, cert_plaque, vole_plaque):
         w = self.stdout.write
         w("")
         w(self.style.SUCCESS("=== Donnees de demonstration SNICV pretes ==="))
@@ -151,9 +162,12 @@ class Command(BaseCommand):
             w(f"  - {role:<12} {prenom} {nom:<10} -> {email}")
         w("")
         if cert_plaque:
-            w("Vehicule CERTIFIE pret a verifier (espace forces de l'ordre) :")
+            w("Vehicule CERTIFIE authentique (espace forces de l'ordre) :")
             w(self.style.SUCCESS(f"  Plaque : {cert_plaque}"))
-            w("  -> Connexion police@snicv.gw -> Controle -> Rechercher par immatriculation.")
+        if vole_plaque:
+            w("Vehicule certifie MAIS SIGNALE VOLE (alerte au controle) :")
+            w(self.style.ERROR(f"  Plaque : {vole_plaque}"))
+        w("  -> police@snicv.gw -> Controle -> Rechercher par immatriculation.")
         w("")
         w("File de validation (espace agent) : dossiers en attente a chaque etape.")
         w("")

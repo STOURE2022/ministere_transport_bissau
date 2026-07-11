@@ -16,7 +16,7 @@ api_v1 = [
     path("", include("apps.validations.urls")),
     path("", include("apps.immatriculations.urls")),
     path("", include("apps.certificats.urls")),
-    # Étape 7 (vérification QP temps réel) s'ajoutera ici.
+    path("", include("apps.signalements.urls")),
 ]
 
 urlpatterns = [

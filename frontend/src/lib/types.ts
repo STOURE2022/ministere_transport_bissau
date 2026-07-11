@@ -169,6 +169,22 @@ export interface CertificatPublic {
   date_expiration: string;
 }
 
+export type TypeSignalement = "VOLE" | "RECHERCHE" | "OPPOSITION";
+
+export interface Alerte {
+  type: TypeSignalement;
+  type_libelle: string;
+  reference: string;
+  motif: string;
+  date_signalement: string;
+}
+
+export const TYPES_SIGNALEMENT: { value: TypeSignalement; label: string }[] = [
+  { value: "VOLE", label: "Véhicule volé" },
+  { value: "RECHERCHE", label: "Véhicule recherché" },
+  { value: "OPPOSITION", label: "Opposition administrative" },
+];
+
 export interface VerificationResult {
   resultat: ResultatScan;
   message: string;
@@ -176,6 +192,7 @@ export interface VerificationResult {
   certificat: CertificatPublic | null;
   methode?: "QR" | "PLAQUE";
   immatriculation?: string;
+  alerte?: Alerte | null;
 }
 
 export interface ScanLog {

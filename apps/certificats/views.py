@@ -25,6 +25,14 @@ from .serializers import (
 from .services import emettre_certificat, revoquer_certificat
 from .verification import MESSAGES, verifier_certificat, verifier_par_immatriculation
 
+from apps.signalements.serializers import alerte_payload
+from apps.signalements.services import alerte_active, trouver_vehicule
+
+
+def _alerte(vehicule) -> dict | None:
+    sig = alerte_active(vehicule)
+    return alerte_payload(sig) if sig else None
+
 # Résultats pour lesquels on affiche les données du véhicule (données fiables).
 _RESULTATS_AVEC_DONNEES = {ResultatScan.AUTHENTIQUE, ResultatScan.REVOQUE, ResultatScan.EXPIRE}
 
@@ -160,11 +168,16 @@ class VerifyView(APIView):
             if certificat is not None and resultat in _RESULTATS_AVEC_DONNEES
             else None
         )
+        # Alerte véhicule volé/recherché : réservée au personnel de contrôle
+        # (agent / forces de l'ordre / admin) — jamais divulguée à un scan anonyme.
+        est_staff = user is not None and getattr(user, "role", None) in {"AGENT", "FORCE_ORDRE", "ADMIN"}
+        alerte = _alerte(certificat.vehicule) if (est_staff and certificat is not None) else None
         return Response({
             "resultat": resultat,
             "message": MESSAGES[resultat],
             "verifie_le": timezone.now(),
             "certificat": donnees,
+            "alerte": alerte,
         })
 
 
@@ -220,6 +233,9 @@ class VerifyPlaqueView(APIView):
             if certificat is not None and resultat in _RESULTATS_AVEC_DONNEES
             else None
         )
+        # Alerte même sans certificat : un véhicule volé peut avoir un certificat
+        # révoqué/absent tout en restant recherché.
+        vehicule = certificat.vehicule if certificat is not None else trouver_vehicule(immatriculation=numero)
         return Response({
             "resultat": resultat,
             "message": MESSAGES[resultat],
@@ -227,4 +243,5 @@ class VerifyPlaqueView(APIView):
             "immatriculation": " ".join(numero.upper().split()),
             "verifie_le": timezone.now(),
             "certificat": donnees,
+            "alerte": _alerte(vehicule),
         })
