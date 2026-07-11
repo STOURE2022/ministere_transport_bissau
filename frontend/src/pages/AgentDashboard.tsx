@@ -14,6 +14,7 @@ import {
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import type { DossierListItem, Paginated, StatutDossier } from "@/lib/types";
 import { Layout } from "@/components/Layout";
 import { StatutBadge } from "@/components/StatutBadge";
@@ -60,6 +61,7 @@ const FILTRES: Filtre[] = [
 ];
 
 export default function AgentDashboard() {
+  const { t } = useLang();
   const [compteurs, setCompteurs] = useState<Record<string, number>>({});
   const [actif, setActif] = useState<StatutDossier>("EN_VALIDATION");
   const [recherche, setRecherche] = useState("");
@@ -94,8 +96,8 @@ export default function AgentDashboard() {
 
   // Recherche différée (debounce) + rechargement au changement de filtre.
   useEffect(() => {
-    const t = setTimeout(charger, recherche ? 300 : 0);
-    return () => clearTimeout(t);
+    const timer = setTimeout(charger, recherche ? 300 : 0);
+    return () => clearTimeout(timer);
   }, [charger, recherche]);
 
   const filtreActif = useMemo(() => FILTRES.find((f) => f.statut === actif)!, [actif]);
@@ -103,10 +105,10 @@ export default function AgentDashboard() {
   return (
     <Layout>
       <div className="mb-6">
-        <div className="eyebrow">Espace agent · Instruction des dossiers</div>
-        <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight">File de validation</h1>
+        <div className="eyebrow">{t("Espace agent · Instruction des dossiers")}</div>
+        <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight">{t("File de validation")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Traitez les demandes d'immatriculation à chaque étape du cycle.
+          {t("Traitez les demandes d'immatriculation à chaque étape du cycle.")}
         </p>
       </div>
 
@@ -133,8 +135,8 @@ export default function AgentDashboard() {
                 <div className="text-2xl font-bold leading-none tnum">
                   {compteurs[f.statut] ?? "—"}
                 </div>
-                <div className="mt-1 truncate text-[12.5px] font-medium">{f.titre}</div>
-                <div className="truncate text-[11px] text-faint">{f.sousTitre}</div>
+                <div className="mt-1 truncate text-[12.5px] font-medium">{t(f.titre)}</div>
+                <div className="truncate text-[11px] text-faint">{t(f.sousTitre)}</div>
               </div>
             </button>
           );
@@ -148,7 +150,7 @@ export default function AgentDashboard() {
           <Input
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Rechercher : n° dossier, VIN, nom du demandeur…"
+            placeholder={t("Rechercher : n° dossier, VIN, nom du demandeur…")}
             className="pl-9"
           />
         </div>
@@ -159,10 +161,10 @@ export default function AgentDashboard() {
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <filtreActif.icone className="size-4 text-primary" />
-            {filtreActif.titre}
+            {t(filtreActif.titre)}
           </div>
           <span className="text-[12px] text-muted-foreground tnum">
-            {total} dossier{total > 1 ? "s" : ""}
+            {total} {t("dossier(s)")}
           </span>
         </div>
 
@@ -175,9 +177,9 @@ export default function AgentDashboard() {
             <span className="grid size-12 place-items-center rounded-full bg-muted text-faint">
               <ClipboardCheck className="size-6" />
             </span>
-            <p className="text-sm font-medium">Aucun dossier à cette étape</p>
+            <p className="text-sm font-medium">{t("Aucun dossier à cette étape")}</p>
             <p className="text-[13px] text-muted-foreground">
-              Rien à traiter dans « {filtreActif.titre} » pour l'instant.
+              {t("Rien à traiter dans")} « {t(filtreActif.titre)} » {t("pour l'instant.")}
             </p>
           </div>
         ) : (
@@ -210,7 +212,7 @@ export default function AgentDashboard() {
                       </div>
                     )}
                     <div className="mt-0.5 text-[11.5px] text-faint tnum">
-                      Déposé le {formatDate(d.date_soumission ?? d.date_creation)}
+                      {t("Déposé le")} {formatDate(d.date_soumission ?? d.date_creation)}
                     </div>
                   </div>
                   <StatutBadge statut={d.statut} />

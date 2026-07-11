@@ -4,6 +4,7 @@ import { Camera, Info, Loader2, QrCode, ScanLine, Search, ShieldCheck, WifiOff }
 import { api, messageErreur } from "@/lib/api";
 import { formatDateTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import {
   type Paginated,
   type ResultatScan,
@@ -27,6 +28,7 @@ const BADGE: Record<ResultatScan, string> = {
 };
 
 export default function ControleForceOrdre() {
+  const { t } = useLang();
   const [plaque, setPlaque] = useState("");
   const [qr, setQr] = useState("");
   const [res, setRes] = useState<VerificationResult | null>(null);
@@ -63,7 +65,7 @@ export default function ControleForceOrdre() {
       });
       apresResultat(data);
     } catch (err) {
-      setErreur(messageErreur(err, "Vérification impossible."));
+      setErreur(messageErreur(err, t("Vérification impossible.")));
     } finally {
       setBusy(null);
     }
@@ -74,7 +76,7 @@ export default function ControleForceOrdre() {
     setErreur(null);
     const uuid = qr.match(RE_UUID)?.[0];
     if (!uuid) {
-      setErreur("QR non reconnu : collez l'URL complète lue par le lecteur.");
+      setErreur(t("QR non reconnu : collez l'URL complète lue par le lecteur."));
       return;
     }
     let h: string | undefined;
@@ -88,7 +90,7 @@ export default function ControleForceOrdre() {
       const { data } = await api.get<VerificationResult>(`/verify/${uuid}/`, { params: { h } });
       apresResultat({ ...data, methode: "QR" });
     } catch (err) {
-      setErreur(messageErreur(err, "Vérification impossible."));
+      setErreur(messageErreur(err, t("Vérification impossible.")));
     } finally {
       setBusy(null);
     }
@@ -98,10 +100,10 @@ export default function ControleForceOrdre() {
     <Layout>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="eyebrow">Forces de l'ordre · Vérification terrain</div>
-          <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight">Contrôle routier</h1>
+          <div className="eyebrow">{t("Forces de l'ordre · Vérification terrain")}</div>
+          <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight">{t("Contrôle routier")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Scannez le QR du certificat ou saisissez la plaque — même QR abîmé.
+            {t("Scannez le QR du certificat ou saisissez la plaque — même QR abîmé.")}
           </p>
         </div>
         <Link
@@ -109,7 +111,7 @@ export default function ControleForceOrdre() {
           className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-[13px] font-semibold text-primary-deep transition hover:border-primary hover:bg-secondary"
         >
           <WifiOff className="size-4" />
-          Mode hors-ligne
+          {t("Mode hors-ligne")}
         </Link>
       </div>
 
@@ -122,12 +124,12 @@ export default function ControleForceOrdre() {
               <span className="grid size-8 place-items-center rounded-lg bg-primary-deep text-white">
                 <QrCode className="size-4" />
               </span>
-              Scanner le QR
+              {t("Scanner le QR")}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-5">
             <p className="mb-3 text-[13px] text-muted-foreground">
-              Méthode recommandée : l'empreinte encodée prouve l'intégrité des données.
+              {t("Méthode recommandée : l'empreinte encodée prouve l'intégrité des données.")}
             </p>
             <form onSubmit={verifierQr} className="space-y-3">
               <textarea
@@ -139,7 +141,7 @@ export default function ControleForceOrdre() {
               />
               <Button type="submit" className="w-full bg-primary-deep hover:bg-navy" disabled={busy !== null}>
                 {busy === "qr" ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
-                Vérifier le QR
+                {t("Vérifier le QR")}
               </Button>
             </form>
           </CardContent>
@@ -152,13 +154,12 @@ export default function ControleForceOrdre() {
               <span className="grid size-8 place-items-center rounded-lg bg-accent text-white">
                 <ScanLine className="size-4" />
               </span>
-              Rechercher par immatriculation
+              {t("Rechercher par immatriculation")}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-5">
             <p className="mb-3 text-[13px] text-muted-foreground">
-              QR illisible ou absent ? Saisissez la plaque : le certificat actif du véhicule est
-              retrouvé.
+              {t("QR illisible ou absent ? Saisissez la plaque : le certificat actif du véhicule est retrouvé.")}
             </p>
             <form onSubmit={verifierPlaque} className="space-y-3">
               <div className="flex h-16 items-stretch overflow-hidden rounded-lg border-[2.5px] border-[#0f1b2d]">
@@ -175,11 +176,11 @@ export default function ControleForceOrdre() {
                 />
               </div>
               <Label className="text-faint">
-                Format : deux lettres · quatre chiffres · suffixe régional (BS = Bissau).
+                {t("Format : deux lettres · quatre chiffres · suffixe régional (BS = Bissau).")}
               </Label>
               <Button type="submit" className="w-full bg-accent hover:opacity-90" disabled={busy !== null}>
                 {busy === "plaque" ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
-                Vérifier la plaque
+                {t("Vérifier la plaque")}
               </Button>
             </form>
           </CardContent>
@@ -193,7 +194,7 @@ export default function ControleForceOrdre() {
       {/* Résultat */}
       {res && (
         <div ref={resultRef} className="mt-6">
-          <div className="eyebrow mb-2">Résultat de la vérification</div>
+          <div className="eyebrow mb-2">{t("Résultat de la vérification")}</div>
           <ResultatVerification res={res} />
         </div>
       )}
@@ -207,12 +208,12 @@ export default function ControleForceOrdre() {
             </span>
             <div>
               <p className="text-[14.5px] font-semibold text-foreground">
-                Les véhicules volés sont détectés automatiquement
+                {t("Les véhicules volés sont détectés automatiquement")}
               </p>
               <p className="mt-0.5 text-[13px] text-muted-foreground">
-                Un véhicule déclaré volé ou recherché (par son propriétaire ou par un agent du
-                ministère) déclenche une <b>alerte rouge</b> dès qu'il est vérifié ici, par QR ou
-                par plaque. Vous n'avez rien à saisir : contrôlez, l'alerte apparaît.
+                {t("Un véhicule déclaré volé ou recherché (par son propriétaire ou par un agent du ministère) déclenche une")}{" "}
+                <b>{t("alerte rouge")}</b>{" "}
+                {t("dès qu'il est vérifié ici, par QR ou par plaque. Vous n'avez rien à saisir : contrôlez, l'alerte apparaît.")}
               </p>
             </div>
           </CardContent>
@@ -221,36 +222,36 @@ export default function ControleForceOrdre() {
 
       {/* Historique des contrôles */}
       <div className="mt-8">
-        <div className="eyebrow mb-2">Historique des contrôles</div>
+        <div className="eyebrow mb-2">{t("Historique des contrôles")}</div>
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[13.5px]">
               <thead>
                 <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-faint">
-                  <th className="px-4 py-3 font-bold">Immatriculation</th>
-                  <th className="px-4 py-3 font-bold">Méthode</th>
-                  <th className="px-4 py-3 font-bold">Résultat</th>
-                  <th className="px-4 py-3 font-bold">Lieu</th>
-                  <th className="px-4 py-3 font-bold">Horodatage</th>
+                  <th className="px-4 py-3 font-bold">{t("Immatriculation")}</th>
+                  <th className="px-4 py-3 font-bold">{t("Méthode")}</th>
+                  <th className="px-4 py-3 font-bold">{t("Résultat")}</th>
+                  <th className="px-4 py-3 font-bold">{t("Lieu")}</th>
+                  <th className="px-4 py-3 font-bold">{t("Horodatage")}</th>
                 </tr>
               </thead>
               <tbody>
                 {historique.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                      Aucun contrôle enregistré pour le moment.
+                      {t("Aucun contrôle enregistré pour le moment.")}
                     </td>
                   </tr>
                 ) : (
                   historique.map((s) => (
                     <tr key={s.id} className="border-b border-border last:border-0">
                       <td className="px-4 py-3 font-semibold">
-                        {s.immatriculation ?? <span className="text-faint">— inconnue —</span>}
+                        {s.immatriculation ?? <span className="text-faint">{t("— inconnue —")}</span>}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.methode_libelle}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{t(s.methode_libelle)}</td>
                       <td className="px-4 py-3">
                         <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-bold", BADGE[s.resultat])}>
-                          {s.resultat_libelle}
+                          {t(s.resultat_libelle)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{s.localisation || "—"}</td>
@@ -266,7 +267,7 @@ export default function ControleForceOrdre() {
 
       <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[12px] text-faint">
         <ShieldCheck className="size-3.5" />
-        Le QR reste la méthode de référence : lui seul prouve l'intégrité cryptographique du certificat.
+        {t("Le QR reste la méthode de référence : lui seul prouve l'intégrité cryptographique du certificat.")}
       </p>
     </Layout>
   );

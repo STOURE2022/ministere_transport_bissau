@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CheckCircle2, ChevronDown, Loader2, Siren } from "lucide-react";
 import { api, messageErreur } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import { TYPES_SIGNALEMENT, type TypeSignalement } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function SignalerVehiculeCard({
   onDeclare?: () => void | Promise<void>;
   className?: string;
 }) {
+  const { t } = useLang();
   const estUsager = contexte === "usager";
   const [ouvert, setOuvert] = useState(false);
   const [type, setType] = useState<TypeSignalement>("VOLE");
@@ -51,13 +53,13 @@ export function SignalerVehiculeCard({
       });
       setMsg({
         ok: true,
-        text: "Déclaration enregistrée. Le véhicule sera signalé aux forces de l'ordre lors d'un contrôle.",
+        text: t("Déclaration enregistrée. Le véhicule sera signalé aux forces de l'ordre lors d'un contrôle."),
       });
       setReference("");
       setMotif("");
       await onDeclare?.();
     } catch (err) {
-      setMsg({ ok: false, text: messageErreur(err, "Déclaration impossible.") });
+      setMsg({ ok: false, text: messageErreur(err, t("Déclaration impossible.")) });
     } finally {
       setBusy(false);
     }
@@ -75,12 +77,12 @@ export function SignalerVehiculeCard({
         </span>
         <span className="flex-1">
           <span className="block text-[14.5px] font-semibold text-foreground">
-            {estUsager ? "Déclarer ce véhicule volé" : "Signaler ce véhicule"}
+            {estUsager ? t("Déclarer ce véhicule volé") : t("Signaler ce véhicule")}
           </span>
           <span className="block text-[12.5px] text-muted-foreground">
             {estUsager
-              ? "En cas de vol, alertez immédiatement les autorités."
-              : "Déclarer volé, recherché ou en opposition administrative."}
+              ? t("En cas de vol, alertez immédiatement les autorités.")
+              : t("Déclarer volé, recherché ou en opposition administrative.")}
           </span>
         </span>
         <ChevronDown className={cn("size-5 text-faint transition-transform", ouvert && "rotate-180")} />
@@ -91,23 +93,23 @@ export function SignalerVehiculeCard({
           {cible ? (
             <form onSubmit={envoyer} className="space-y-3">
               <div className="rounded-lg bg-muted/50 px-3 py-2 text-[13px]">
-                <span className="text-faint">Véhicule concerné : </span>
+                <span className="text-faint">{t("Véhicule concerné :")} </span>
                 <span className="font-semibold tnum">{cible}</span>
                 {!immatriculation && vin && <span className="text-faint"> (VIN)</span>}
               </div>
 
               {!estUsager && (
                 <div>
-                  <Label htmlFor="sig-type">Type de signalement</Label>
+                  <Label htmlFor="sig-type">{t("Type de signalement")}</Label>
                   <Select
                     id="sig-type"
                     value={type}
                     onChange={(e) => setType(e.target.value as TypeSignalement)}
                     className="mt-1"
                   >
-                    {TYPES_SIGNALEMENT.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
+                    {TYPES_SIGNALEMENT.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {t(opt.label)}
                       </option>
                     ))}
                   </Select>
@@ -115,7 +117,7 @@ export function SignalerVehiculeCard({
               )}
 
               <div>
-                <Label htmlFor="sig-ref">Référence (dépôt de plainte / PV)</Label>
+                <Label htmlFor="sig-ref">{t("Référence (dépôt de plainte / PV)")}</Label>
                 <Input
                   id="sig-ref"
                   value={reference}
@@ -125,19 +127,19 @@ export function SignalerVehiculeCard({
                 />
               </div>
               <div>
-                <Label htmlFor="sig-motif">Circonstances</Label>
+                <Label htmlFor="sig-motif">{t("Circonstances")}</Label>
                 <Input
                   id="sig-motif"
                   value={motif}
                   onChange={(e) => setMotif(e.target.value)}
-                  placeholder={estUsager ? "Volé cette nuit à Bissau" : "Motif du signalement"}
+                  placeholder={estUsager ? t("Volé cette nuit à Bissau") : t("Motif du signalement")}
                   className="mt-1"
                 />
               </div>
 
               <Button type="submit" variant="destructive" disabled={busy} className="w-full">
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Siren className="size-4" />}
-                {estUsager ? "Déclarer le vol" : "Enregistrer le signalement"}
+                {estUsager ? t("Déclarer le vol") : t("Enregistrer le signalement")}
               </Button>
 
               {msg && (
@@ -154,7 +156,7 @@ export function SignalerVehiculeCard({
             </form>
           ) : (
             <p className="text-[13px] text-muted-foreground">
-              Ce véhicule n'est pas encore identifiable (ni plaque ni VIN) — déclaration indisponible.
+              {t("Ce véhicule n'est pas encore identifiable (ni plaque ni VIN) — déclaration indisponible.")}
             </p>
           )}
         </CardContent>

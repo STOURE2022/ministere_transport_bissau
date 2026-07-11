@@ -4,6 +4,7 @@ import { Check, Copy, Download, Loader2, ShieldAlert, ShieldCheck } from "lucide
 import { telechargerCertificatPdf } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import type { Certificat } from "@/lib/types";
 import { PlaqueImmatriculation } from "@/components/PlaqueImmatriculation";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export function CertificatPremium({
   onRevoquer?: (motif: string) => void;
   busyRevoke?: boolean;
 }) {
+  const { t } = useLang();
   const snap = certificat.donnees_snapshot || {};
   const revoque = certificat.statut === "REVOQUE";
   const [tel, setTel] = useState(false);
@@ -58,7 +60,7 @@ export function CertificatPremium({
     try {
       await telechargerCertificatPdf(certificat.id);
     } catch {
-      setErrPdf("PDF momentanément indisponible.");
+      setErrPdf(t("PDF momentanément indisponible."));
     } finally {
       setTel(false);
     }
@@ -85,8 +87,8 @@ export function CertificatPremium({
           <Star />
         </span>
         <div className="flex-1">
-          <div className="font-serif text-lg font-bold leading-tight">Certificat d'immatriculation</div>
-          <div className="text-[11px] text-[#b9cbe6]">République de Guinée-Bissau · SNICV</div>
+          <div className="font-serif text-lg font-bold leading-tight">{t("Certificat d'immatriculation")}</div>
+          <div className="text-[11px] text-[#b9cbe6]">{t("République de Guinée-Bissau · SNICV")}</div>
         </div>
         <span
           className={cn(
@@ -94,7 +96,7 @@ export function CertificatPremium({
             revoque ? "bg-white/15 text-white" : "bg-white/15 text-white"
           )}
         >
-          {certificat.statut_libelle}
+          {t(certificat.statut_libelle)}
         </span>
       </div>
       <div className="h-[3px] bg-accent" />
@@ -105,14 +107,14 @@ export function CertificatPremium({
         <div>
           <PlaqueImmatriculation numero={champ(snap, "immatriculation")} className="mx-0 max-w-[260px]" />
           <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3.5 text-sm">
-            <Bloc label="Titulaire" valeur={champ(snap, "proprietaire")} />
-            <Bloc label="Véhicule" valeur={marqueModele} />
-            <Bloc label="Année · Énergie" valeur={`${champ(snap, "annee")} · ${champ(snap, "energie")}`} />
-            <Bloc label="Type" valeur={champ(snap, "type")} />
-            <Bloc label="Assurance — échéance" valeur={formatDate((snap.assurance_echeance as string) || null)} />
-            <Bloc label="Contrôle technique" valeur={formatDate((snap.ct_echeance as string) || null)} />
-            <Bloc label="Émis le" valeur={formatDate(certificat.date_emission)} />
-            <Bloc label="Valable jusqu'au" valeur={formatDate(certificat.date_expiration)} />
+            <Bloc label={t("Titulaire")} valeur={champ(snap, "proprietaire")} />
+            <Bloc label={t("Véhicule")} valeur={marqueModele} />
+            <Bloc label={t("Année · Énergie")} valeur={`${champ(snap, "annee")} · ${champ(snap, "energie")}`} />
+            <Bloc label={t("Type")} valeur={champ(snap, "type")} />
+            <Bloc label={t("Assurance — échéance")} valeur={formatDate((snap.assurance_echeance as string) || null)} />
+            <Bloc label={t("Contrôle technique")} valeur={formatDate((snap.ct_echeance as string) || null)} />
+            <Bloc label={t("Émis le")} valeur={formatDate(certificat.date_emission)} />
+            <Bloc label={t("Valable jusqu'au")} valeur={formatDate(certificat.date_expiration)} />
           </dl>
         </div>
 
@@ -124,8 +126,8 @@ export function CertificatPremium({
             </div>
           </div>
           <div className="text-center">
-            <div className="text-[12.5px] font-bold text-primary-deep">Scannez pour vérifier</div>
-            <div className="text-[11px] text-muted-foreground">authenticité en temps réel</div>
+            <div className="text-[12.5px] font-bold text-primary-deep">{t("Scannez pour vérifier")}</div>
+            <div className="text-[11px] text-muted-foreground">{t("authenticité en temps réel")}</div>
           </div>
           <Sceau />
         </div>
@@ -134,11 +136,11 @@ export function CertificatPremium({
       {/* Bandeau de sécurité */}
       <div className="mx-6 mb-2 rounded-xl border border-[#e8e0cf] border-l-4 border-l-accent bg-white/70 px-4 py-3">
         <div className="text-[11px] font-bold uppercase tracking-wide text-primary-deep">
-          Empreinte SHA-256
+          {t("Empreinte SHA-256")}
         </div>
         <div className="break-all font-mono text-[11.5px] text-foreground">{certificat.hash_sha256}</div>
         <div className="mt-1 text-[12px] italic text-muted-foreground">
-          Document signé numériquement par le SNICV (RSA-2048). Toute altération invalide la signature.
+          {t("Document signé numériquement par le SNICV (RSA-2048). Toute altération invalide la signature.")}
         </div>
       </div>
 
@@ -146,32 +148,32 @@ export function CertificatPremium({
       <div className="flex flex-wrap items-center gap-3 border-t border-[#e8e0cf] bg-paper-deep/50 px-6 py-4">
         <Button variant="outline" onClick={telecharger} disabled={tel}>
           {tel ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
-          Télécharger le PDF officiel
+          {t("Télécharger le PDF officiel")}
         </Button>
         {errPdf && <span className="text-[12.5px] text-destructive">{errPdf}</span>}
 
         {certificat.jeton_hors_ligne && (
-          <Button variant="ghost" onClick={copierJeton} title="Pour un contrôle sans réseau (/verify-offline)">
+          <Button variant="ghost" onClick={copierJeton} title={t("Pour un contrôle sans réseau (/verify-offline)")}>
             {copie ? <Check className="size-4 text-[#1e8e5a]" /> : <Copy className="size-4" />}
-            {copie ? "Jeton copié" : "Jeton hors-ligne"}
+            {copie ? t("Jeton copié") : t("Jeton hors-ligne")}
           </Button>
         )}
 
         {revocable && onRevoquer && (
           <div className="ml-auto flex items-end gap-2">
             <div>
-              <Label htmlFor="motif-rev" className="text-faint">Révocation (admin)</Label>
+              <Label htmlFor="motif-rev" className="text-faint">{t("Révocation (admin)")}</Label>
               <Input
                 id="motif-rev"
                 value={motif}
                 onChange={(e) => setMotif(e.target.value)}
-                placeholder="Motif"
+                placeholder={t("Motif")}
                 className="h-9 w-48"
               />
             </div>
             <Button variant="destructive" className="h-9" disabled={busyRevoke} onClick={() => onRevoquer(motif)}>
               {busyRevoke ? <Loader2 className="size-4 animate-spin" /> : <ShieldAlert className="size-4" />}
-              Révoquer
+              {t("Révoquer")}
             </Button>
           </div>
         )}
@@ -180,7 +182,7 @@ export function CertificatPremium({
       {revoque && certificat.motif_revocation && (
         <div className="mx-6 mb-5 flex items-start gap-2 rounded-lg bg-[#FBE7E7] px-3 py-2 text-[13px] text-[#9a2f2f]">
           <ShieldAlert className="mt-0.5 size-4 shrink-0" />
-          <span>Certificat révoqué — {certificat.motif_revocation}</span>
+          <span>{t("Certificat révoqué —")} {certificat.motif_revocation}</span>
         </div>
       )}
     </div>
@@ -209,11 +211,12 @@ function Star() {
 
 /** Sceau doré « CERTIFIÉ » (léger effet tampon incliné). */
 function Sceau() {
+  const { t } = useLang();
   return (
     <div className="relative mt-1 grid size-[92px] -rotate-[8deg] place-items-center rounded-full border-[2.5px] border-accent text-accent">
       <div className="absolute inset-[6px] rounded-full border border-accent" />
       <ShieldCheck className="size-7" />
-      <span className="absolute bottom-2.5 text-[8px] font-extrabold tracking-[0.12em]">CERTIFIÉ</span>
+      <span className="absolute bottom-2.5 text-[8px] font-extrabold tracking-[0.12em]">{t("CERTIFIÉ")}</span>
     </div>
   );
 }

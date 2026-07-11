@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { api, messageErreur, telechargerCertificatPdf } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import {
   DOCUMENTS_REQUIS,
   TYPE_VEHICULE_LABEL,
@@ -34,6 +35,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DossierDetail() {
+  const { t } = useLang();
   const { id } = useParams<{ id: string }>();
   const [dossier, setDossier] = useState<Dossier | null>(null);
   const [verification, setVerification] = useState<Verification | null>(null);
@@ -101,7 +103,7 @@ export default function DossierDetail() {
   if (!dossier) {
     return (
       <Layout>
-        <p className="text-muted-foreground">Dossier introuvable.</p>
+        <p className="text-muted-foreground">{t("Dossier introuvable.")}</p>
       </Layout>
     );
   }
@@ -117,7 +119,7 @@ export default function DossierDetail() {
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
       >
         <ArrowLeft className="size-4" />
-        Mes dossiers
+        {t("Mes dossiers")}
       </Link>
 
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
@@ -136,7 +138,7 @@ export default function DossierDetail() {
 
       {certificat && (
         <div className="mb-5">
-          <div className="eyebrow mb-2">Certificat délivré</div>
+          <div className="eyebrow mb-2">{t("Certificat délivré")}</div>
           <CertificatPremium certificat={certificat} />
         </div>
       )}
@@ -145,7 +147,7 @@ export default function DossierDetail() {
         <div className="mb-5 flex gap-3 rounded-xl border border-[#F1CFCF] bg-[#FBE7E7] p-4">
           <AlertTriangle className="size-5 shrink-0 text-destructive" />
           <div>
-            <p className="font-semibold text-[#9a2f2f]">Dossier rejeté</p>
+            <p className="font-semibold text-[#9a2f2f]">{t("Dossier rejeté")}</p>
             <p className="mt-0.5 text-[13px] text-[#9a2f2f]">{dossier.motif_rejet}</p>
           </div>
         </div>
@@ -156,7 +158,7 @@ export default function DossierDetail() {
         <div className="space-y-5">
           <Card>
             <CardHeader className="border-b border-border">
-              <CardTitle>Pièces justificatives</CardTitle>
+              <CardTitle>{t("Pièces justificatives")}</CardTitle>
             </CardHeader>
             <CardContent className="pt-5">
               <div className="space-y-3">
@@ -173,10 +175,10 @@ export default function DossierDetail() {
                         ) : (
                           <span className="size-5 rounded-full border-2 border-input" />
                         )}
-                        <span className="text-sm font-medium">{doc.label}</span>
+                        <span className="text-sm font-medium">{t(doc.label)}</span>
                         {present && (
                           <span className="ml-auto text-[12px] font-medium text-success">
-                            Déposé
+                            {t("Déposé")}
                           </span>
                         )}
                       </div>
@@ -201,12 +203,12 @@ export default function DossierDetail() {
                 <div className="text-sm text-muted-foreground">
                   {manquants.length === 0 ? (
                     <span className="font-medium text-success">
-                      Toutes les pièces obligatoires sont déposées.
+                      {t("Toutes les pièces obligatoires sont déposées.")}
                     </span>
                   ) : (
                     <>
-                      <b className="text-foreground">{manquants.length}</b> pièce(s) obligatoire(s)
-                      manquante(s).
+                      <b className="text-foreground">{manquants.length}</b> {t("pièce(s) obligatoire(s)")}{" "}
+                      {t("manquante(s).")}
                     </>
                   )}
                 </div>
@@ -216,7 +218,7 @@ export default function DossierDetail() {
                   ) : (
                     <Send className="size-4" />
                   )}
-                  Soumettre le dossier
+                  {t("Soumettre le dossier")}
                 </Button>
               </CardContent>
               {(problemes.length > 0 || erreur) && (
@@ -239,18 +241,18 @@ export default function DossierDetail() {
 
           <Card>
             <CardHeader className="border-b border-border">
-              <CardTitle>Véhicule</CardTitle>
+              <CardTitle>{t("Véhicule")}</CardTitle>
             </CardHeader>
             <CardContent className="pt-5">
               <dl className="space-y-2.5 text-sm">
                 <Ligne label="VIN" valeur={dossier.vehicule.vin} />
-                <Ligne label="Marque / Modèle" valeur={`${dossier.vehicule.marque} ${dossier.vehicule.modele}`} />
-                <Ligne label="Année" valeur={String(dossier.vehicule.annee)} />
+                <Ligne label={t("Marque / Modèle")} valeur={`${dossier.vehicule.marque} ${dossier.vehicule.modele}`} />
+                <Ligne label={t("Année")} valeur={String(dossier.vehicule.annee)} />
                 <Ligne
-                  label="Type"
-                  valeur={TYPE_VEHICULE_LABEL[dossier.vehicule.type_vehicule] ?? dossier.vehicule.type_vehicule}
+                  label={t("Type")}
+                  valeur={t(TYPE_VEHICULE_LABEL[dossier.vehicule.type_vehicule] ?? dossier.vehicule.type_vehicule)}
                 />
-                <Ligne label="Déposé le" valeur={formatDate(dossier.date_soumission)} />
+                <Ligne label={t("Déposé le")} valeur={formatDate(dossier.date_soumission)} />
               </dl>
             </CardContent>
           </Card>
@@ -269,17 +271,17 @@ export default function DossierDetail() {
               <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <FileCheck2 className="size-4 text-primary" />
-                  Vérification automatique
+                  {t("Vérification automatique")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2.5 pt-5 text-sm">
-                <Check ok={verification.vin_valide} label="VIN valide" />
-                <Check ok={verification.assurance_valide} label="Assurance valide" />
-                <Check ok={verification.ct_valide} label="Contrôle technique valide" />
-                <Check ok={!verification.doublon_detecte} label="Aucun doublon" />
+                <Check ok={verification.vin_valide} label={t("VIN valide")} />
+                <Check ok={verification.assurance_valide} label={t("Assurance valide")} />
+                <Check ok={verification.ct_valide} label={t("Contrôle technique valide")} />
+                <Check ok={!verification.doublon_detecte} label={t("Aucun doublon")} />
                 <div className="mt-2 flex items-center justify-between border-t border-border pt-3">
-                  <span className="text-muted-foreground">Niveau de risque</span>
-                  <span className="font-semibold">{verification.niveau_risque_libelle}</span>
+                  <span className="text-muted-foreground">{t("Niveau de risque")}</span>
+                  <span className="font-semibold">{t(verification.niveau_risque_libelle)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -319,6 +321,7 @@ function CarteCertificatUsager({
   immat: Immatriculation | null;
   certificat: Certificat | null;
 }) {
+  const { t } = useLang();
   const [tel, setTel] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const revoque = certificat?.statut === "REVOQUE";
@@ -330,7 +333,7 @@ function CarteCertificatUsager({
     try {
       await telechargerCertificatPdf(certificat.id);
     } catch {
-      setErreur("PDF momentanément indisponible.");
+      setErreur(t("PDF momentanément indisponible."));
     } finally {
       setTel(false);
     }
@@ -341,7 +344,7 @@ function CarteCertificatUsager({
       <CardHeader className="border-b border-border">
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className={`size-4 ${revoque ? "text-destructive" : "text-success"}`} />
-          {certificat ? (revoque ? "Certificat révoqué" : "Certificat délivré") : "Immatriculation"}
+          {certificat ? (revoque ? t("Certificat révoqué") : t("Certificat délivré")) : t("Immatriculation")}
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-5">
@@ -354,12 +357,12 @@ function CarteCertificatUsager({
                 <QRCodeSVG value={certificat.qr_payload} size={150} level="M" />
               </div>
               <p className="text-center text-[11px] text-muted-foreground">
-                Présentez ce QR lors d'un contrôle
+                {t("Présentez ce QR lors d'un contrôle")}
               </p>
             </div>
             <dl className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between gap-3">
-                <dt className="text-faint">Valable jusqu'au</dt>
+                <dt className="text-faint">{t("Valable jusqu'au")}</dt>
                 <dd className="text-right font-medium tnum">
                   {formatDate(certificat.date_expiration)}
                 </dd>
@@ -367,7 +370,7 @@ function CarteCertificatUsager({
             </dl>
             <Button variant="outline" className="mt-4 w-full" onClick={telecharger} disabled={tel}>
               {tel ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
-              Télécharger le certificat
+              {t("Télécharger le certificat")}
             </Button>
             {erreur && <p className="mt-2 text-[12.5px] text-destructive">{erreur}</p>}
             {revoque && certificat.motif_revocation && (
@@ -393,6 +396,7 @@ function UploadRow({
   withDates: boolean;
   onDone: () => Promise<void>;
 }) {
+  const { t } = useLang();
   const [fichier, setFichier] = useState<File | null>(null);
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
@@ -412,7 +416,7 @@ function UploadRow({
       await api.post(`/dossiers/${dossierId}/documents/`, fd);
       await onDone();
     } catch (err) {
-      setErreur(messageErreur(err, "Envoi impossible (format PDF/JPG/PNG, 5 Mo max)."));
+      setErreur(messageErreur(err, t("Envoi impossible (format PDF/JPG/PNG, 5 Mo max).")));
     } finally {
       setEnvoi(false);
     }
@@ -429,7 +433,7 @@ function UploadRow({
       {withDates && (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor={`${type}-deb`}>Début / émission</Label>
+            <Label htmlFor={`${type}-deb`}>{t("Début / émission")}</Label>
             <Input
               id={`${type}-deb`}
               type="date"
@@ -438,7 +442,7 @@ function UploadRow({
             />
           </div>
           <div>
-            <Label htmlFor={`${type}-fin`}>Échéance</Label>
+            <Label htmlFor={`${type}-fin`}>{t("Échéance")}</Label>
             <Input
               id={`${type}-fin`}
               type="date"
@@ -451,7 +455,7 @@ function UploadRow({
       {erreur && <p className="text-[12.5px] text-destructive">{erreur}</p>}
       <Button size="sm" onClick={envoyer} disabled={!fichier || envoi}>
         {envoi ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-        Téléverser
+        {t("Téléverser")}
       </Button>
     </div>
   );

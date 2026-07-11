@@ -23,6 +23,7 @@ import {
 import { api, messageErreur, telechargerCertificatPdf } from "@/lib/api";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { useLang } from "@/lib/i18n";
 import {
   DOCUMENTS_REQUIS,
   TYPE_VEHICULE_LABEL,
@@ -50,6 +51,7 @@ const DOC_LABEL: Record<string, string> = Object.fromEntries(
 export default function AgentDossier() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { t } = useLang();
   const [dossier, setDossier] = useState<Dossier | null>(null);
   const [verification, setVerification] = useState<Verification | null>(null);
   const [historique, setHistorique] = useState<ValidationDecision[]>([]);
@@ -126,7 +128,7 @@ export default function AgentDossier() {
   if (!dossier) {
     return (
       <Layout>
-        <p className="text-muted-foreground">Dossier introuvable.</p>
+        <p className="text-muted-foreground">{t("Dossier introuvable.")}</p>
       </Layout>
     );
   }
@@ -138,7 +140,7 @@ export default function AgentDossier() {
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
       >
         <ArrowLeft className="size-4" />
-        File de validation
+        {t("File de validation")}
       </Link>
 
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
@@ -159,7 +161,7 @@ export default function AgentDossier() {
         <div className="mb-5 flex gap-3 rounded-xl border border-[#F1CFCF] bg-[#FBE7E7] p-4">
           <AlertTriangle className="size-5 shrink-0 text-destructive" />
           <div>
-            <p className="font-semibold text-[#9a2f2f]">Dossier rejeté</p>
+            <p className="font-semibold text-[#9a2f2f]">{t("Dossier rejeté")}</p>
             <p className="mt-0.5 text-[13px] text-[#9a2f2f]">{dossier.motif_rejet}</p>
           </div>
         </div>
@@ -167,7 +169,7 @@ export default function AgentDossier() {
 
       {certificat && (
         <div className="mb-5">
-          <div className="eyebrow mb-2">Certificat délivré</div>
+          <div className="eyebrow mb-2">{t("Certificat délivré")}</div>
           <CertificatPremium
             certificat={certificat}
             revocable={user?.role === "ADMIN" && certificat.statut !== "REVOQUE"}
@@ -186,7 +188,7 @@ export default function AgentDossier() {
               <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <User className="size-4 text-primary" />
-                  Demandeur
+                  {t("Demandeur")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid gap-2.5 pt-5 text-sm sm:grid-cols-2">
@@ -208,24 +210,24 @@ export default function AgentDossier() {
           {/* Véhicule */}
           <Card>
             <CardHeader className="border-b border-border">
-              <CardTitle>Véhicule</CardTitle>
+              <CardTitle>{t("Véhicule")}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-2.5 pt-5 text-sm sm:grid-cols-2">
               <Ligne label="VIN" valeur={dossier.vehicule.vin} />
               <Ligne
-                label="Marque / Modèle"
+                label={t("Marque / Modèle")}
                 valeur={`${dossier.vehicule.marque} ${dossier.vehicule.modele}`}
               />
-              <Ligne label="Année" valeur={String(dossier.vehicule.annee)} />
+              <Ligne label={t("Année")} valeur={String(dossier.vehicule.annee)} />
               <Ligne
-                label="Type"
-                valeur={
+                label={t("Type")}
+                valeur={t(
                   TYPE_VEHICULE_LABEL[dossier.vehicule.type_vehicule] ??
                   dossier.vehicule.type_vehicule
-                }
+                )}
               />
-              <Ligne label="Énergie" valeur={dossier.vehicule.energie} />
-              <Ligne label="Couleur" valeur={dossier.vehicule.couleur || "—"} />
+              <Ligne label={t("Énergie")} valeur={t(dossier.vehicule.energie.charAt(0) + dossier.vehicule.energie.slice(1).toLowerCase())} />
+              <Ligne label={t("Couleur")} valeur={dossier.vehicule.couleur || "—"} />
             </CardContent>
           </Card>
 
@@ -234,12 +236,12 @@ export default function AgentDossier() {
             <CardHeader className="border-b border-border">
               <CardTitle className="flex items-center gap-2">
                 <FileText className="size-4 text-primary" />
-                Pièces justificatives
+                {t("Pièces justificatives")}
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-5">
               {dossier.documents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucune pièce déposée.</p>
+                <p className="text-sm text-muted-foreground">{t("Aucune pièce déposée.")}</p>
               ) : (
                 <ul className="space-y-2.5">
                   {dossier.documents.map((doc) => (
@@ -251,7 +253,7 @@ export default function AgentDossier() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-medium">
-                            {DOC_LABEL[doc.type_document] ?? doc.type_document}
+                            {t(DOC_LABEL[doc.type_document] ?? doc.type_document)}
                           </span>
                           <span className="rounded bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold uppercase text-faint">
                             {doc.format}
@@ -279,7 +281,7 @@ export default function AgentDossier() {
               <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="size-4 text-primary" />
-                  Historique des décisions
+                  {t("Historique des décisions")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-5">
@@ -289,13 +291,13 @@ export default function AgentDossier() {
                       <div className="mt-1 size-2 shrink-0 rounded-full bg-primary" />
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-baseline gap-x-2">
-                          <span className="text-sm font-semibold">{h.action_libelle}</span>
+                          <span className="text-sm font-semibold">{t(h.action_libelle)}</span>
                           <span className="text-[11.5px] text-faint tnum">
                             {formatDateTime(h.date_creation)}
                           </span>
                         </div>
                         {h.agent_nom && (
-                          <p className="text-[12px] text-muted-foreground">par {h.agent_nom}</p>
+                          <p className="text-[12px] text-muted-foreground">{t("par")} {h.agent_nom}</p>
                         )}
                         {h.commentaire && (
                           <p className="mt-1 rounded-lg bg-muted px-3 py-2 text-[13px]">
@@ -318,17 +320,17 @@ export default function AgentDossier() {
               <CardHeader className="border-b border-border">
                 <CardTitle className="flex items-center gap-2">
                   <FileCheck2 className="size-4 text-primary" />
-                  Vérification automatique
+                  {t("Vérification automatique")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2.5 pt-5 text-sm">
-                <Check ok={verification.vin_valide} label="VIN valide" />
-                <Check ok={verification.assurance_valide} label="Assurance valide" />
-                <Check ok={verification.ct_valide} label="Contrôle technique valide" />
-                <Check ok={!verification.doublon_detecte} label="Aucun doublon" />
+                <Check ok={verification.vin_valide} label={t("VIN valide")} />
+                <Check ok={verification.assurance_valide} label={t("Assurance valide")} />
+                <Check ok={verification.ct_valide} label={t("Contrôle technique valide")} />
+                <Check ok={!verification.doublon_detecte} label={t("Aucun doublon")} />
                 <div className="mt-2 border-t border-border pt-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Score de fraude</span>
+                    <span className="text-muted-foreground">{t("Score de fraude")}</span>
                     <span className="font-bold tnum">{verification.score_fraude} / 100</span>
                   </div>
                   <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
@@ -345,7 +347,7 @@ export default function AgentDossier() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Niveau de risque</span>
+                  <span className="text-muted-foreground">{t("Niveau de risque")}</span>
                   <NiveauRisque niveau={verification.niveau_risque} libelle={verification.niveau_risque_libelle} />
                 </div>
               </CardContent>
@@ -385,10 +387,11 @@ const CHAINE = [
 ] as const;
 
 function ChaineTraitement({ statut }: { statut: string }) {
+  const { t } = useLang();
   if (["BROUILLON", "SOUMIS", "VERIF_AUTO", "REJETE"].includes(statut)) return null;
   return (
     <div className="mt-6">
-      <div className="eyebrow mb-2">Suite du traitement</div>
+      <div className="eyebrow mb-2">{t("Suite du traitement")}</div>
       <div className="grid gap-3 sm:grid-cols-3">
         {CHAINE.map((c) => {
           const actif = (c.statuts as readonly string[]).includes(statut);
@@ -400,10 +403,10 @@ function ChaineTraitement({ statut }: { statut: string }) {
               }`}
             >
               <div className="eyebrow" style={{ color: actif ? undefined : "var(--color-faint)" }}>
-                {actif ? "Étape en cours" : "Étape"}
+                {actif ? t("Étape en cours") : t("Étape")}
               </div>
-              <div className="mt-1 font-semibold">{c.titre}</div>
-              <div className="mt-0.5 text-[12.5px] text-muted-foreground">{c.desc}</div>
+              <div className="mt-1 font-semibold">{t(c.titre)}</div>
+              <div className="mt-0.5 text-[12.5px] text-muted-foreground">{t(c.desc)}</div>
             </div>
           );
         })}
@@ -427,6 +430,7 @@ function PanneauAction({
   estAdmin: boolean;
   onDone: () => Promise<void>;
 }) {
+  const { t } = useLang();
   const [busy, setBusy] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [succes, setSucces] = useState<string | null>(null);
@@ -440,7 +444,7 @@ function PanneauAction({
     setSucces(null);
     try {
       const r = await requete();
-      setSucces(r.data?.message ?? "Action effectuée.");
+      setSucces(r.data?.message ?? t("Action effectuée."));
       setCommentaire("");
       setMotif("");
       await onDone();
@@ -458,7 +462,7 @@ function PanneauAction({
     return (
       <Card>
         <CardHeader className="border-b border-border">
-          <CardTitle>Décision</CardTitle>
+          <CardTitle>{t("Décision")}</CardTitle>
         </CardHeader>
         <CardContent className="pt-5">
           <div className="mb-4 grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
@@ -477,7 +481,7 @@ function PanneauAction({
                   (mode === val ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")
                 }
               >
-                {lib}
+                {t(lib)}
               </button>
             ))}
           </div>
@@ -485,14 +489,14 @@ function PanneauAction({
           {mode === "valider" && (
             <div className="space-y-3">
               <div>
-                <Label htmlFor="c-val">Commentaire (facultatif)</Label>
+                <Label htmlFor="c-val">{t("Commentaire (facultatif)")}</Label>
                 <textarea
                   id="c-val"
                   value={commentaire}
                   onChange={(e) => setCommentaire(e.target.value)}
                   rows={3}
                   className="mt-1 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  placeholder="Observation éventuelle…"
+                  placeholder={t("Observation éventuelle…")}
                 />
               </div>
               <Button
@@ -510,7 +514,7 @@ function PanneauAction({
                 ) : (
                   <BadgeCheck className="size-4" />
                 )}
-                Valider le dossier
+                {t("Valider le dossier")}
               </Button>
             </div>
           )}
@@ -518,14 +522,14 @@ function PanneauAction({
           {mode === "rejeter" && (
             <div className="space-y-3">
               <div>
-                <Label htmlFor="c-rej">Motif du rejet (obligatoire)</Label>
+                <Label htmlFor="c-rej">{t("Motif du rejet (obligatoire)")}</Label>
                 <textarea
                   id="c-rej"
                   value={motif}
                   onChange={(e) => setMotif(e.target.value)}
                   rows={3}
                   className="mt-1 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  placeholder="Ex. : attestation d'assurance expirée."
+                  placeholder={t("Ex. : attestation d'assurance expirée.")}
                 />
               </div>
               <Button
@@ -541,7 +545,7 @@ function PanneauAction({
                 ) : (
                   <XCircle className="size-4" />
                 )}
-                Rejeter le dossier
+                {t("Rejeter le dossier")}
               </Button>
             </div>
           )}
@@ -549,18 +553,18 @@ function PanneauAction({
           {mode === "complement" && (
             <div className="space-y-3">
               <div>
-                <Label htmlFor="c-comp">Pièce / information demandée (obligatoire)</Label>
+                <Label htmlFor="c-comp">{t("Pièce / information demandée (obligatoire)")}</Label>
                 <textarea
                   id="c-comp"
                   value={commentaire}
                   onChange={(e) => setCommentaire(e.target.value)}
                   rows={3}
                   className="mt-1 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  placeholder="Ex. : merci de redéposer un contrôle technique lisible."
+                  placeholder={t("Ex. : merci de redéposer un contrôle technique lisible.")}
                 />
               </div>
               <p className="text-[12px] text-muted-foreground">
-                Le dossier repassera en brouillon pour que l'usager le complète.
+                {t("Le dossier repassera en brouillon pour que l'usager le complète.")}
               </p>
               <Button
                 variant="outline"
@@ -577,7 +581,7 @@ function PanneauAction({
                 ) : (
                   <Mail className="size-4" />
                 )}
-                Demander un complément
+                {t("Demander un complément")}
               </Button>
             </div>
           )}
@@ -593,11 +597,11 @@ function PanneauAction({
     return (
       <Card>
         <CardHeader className="border-b border-border">
-          <CardTitle>Immatriculation</CardTitle>
+          <CardTitle>{t("Immatriculation")}</CardTitle>
         </CardHeader>
         <CardContent className="pt-5">
           <p className="mb-4 text-sm text-muted-foreground">
-            Le dossier est validé. Attribuez un numéro de plaque officiel pour poursuivre.
+            {t("Le dossier est validé. Attribuez un numéro de plaque officiel pour poursuivre.")}
           </p>
           <Button
             className="w-full"
@@ -611,7 +615,7 @@ function PanneauAction({
             ) : (
               <Hash className="size-4" />
             )}
-            Attribuer une immatriculation
+            {t("Attribuer une immatriculation")}
           </Button>
           <Retour erreur={erreur} succes={succes} />
         </CardContent>
@@ -624,19 +628,19 @@ function PanneauAction({
     return (
       <Card>
         <CardHeader className="border-b border-border">
-          <CardTitle>Certificat QR</CardTitle>
+          <CardTitle>{t("Certificat QR")}</CardTitle>
         </CardHeader>
         <CardContent className="pt-5">
           {immat && (
             <div className="mb-4">
               <PlaqueImmatriculation numero={immat.numero} />
               <p className="mt-2 text-center text-[12px] text-muted-foreground tnum">
-                Attribuée le {formatDate(immat.date_attribution)}
+                {t("Attribuée le")} {formatDate(immat.date_attribution)}
               </p>
             </div>
           )}
           <p className="mb-4 text-sm text-muted-foreground">
-            Générez le certificat signé (RSA-2048) et son QR de vérification.
+            {t("Générez le certificat signé (RSA-2048) et son QR de vérification.")}
           </p>
           <Button
             className="w-full"
@@ -650,7 +654,7 @@ function PanneauAction({
             ) : (
               <Stamp className="size-4" />
             )}
-            Émettre le certificat
+            {t("Émettre le certificat")}
           </Button>
           <Retour erreur={erreur} succes={succes} />
         </CardContent>
@@ -666,9 +670,9 @@ function PanneauAction({
           <span className="grid size-12 place-items-center rounded-full bg-[#E4F3EC] text-success">
             <ShieldCheck className="size-6" />
           </span>
-          <p className="text-sm font-semibold">Cycle terminé</p>
+          <p className="text-sm font-semibold">{t("Cycle terminé")}</p>
           <p className="text-[13px] text-muted-foreground">
-            Le certificat est délivré et vérifiable par QR. Voir le détail ci-dessus.
+            {t("Le certificat est délivré et vérifiable par QR. Voir le détail ci-dessus.")}
           </p>
         </CardContent>
       </Card>
@@ -680,9 +684,9 @@ function PanneauAction({
     <Card>
       <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
         <Clock className="size-6 text-faint" />
-        <p className="text-sm font-medium">Aucune action requise</p>
+        <p className="text-sm font-medium">{t("Aucune action requise")}</p>
         <p className="text-[13px] text-muted-foreground">
-          Ce dossier n'est pas encore parvenu à une étape nécessitant un agent.
+          {t("Ce dossier n'est pas encore parvenu à une étape nécessitant un agent.")}
         </p>
       </CardContent>
     </Card>
@@ -827,6 +831,7 @@ function Check({ ok, label }: { ok: boolean; label: string }) {
 }
 
 function NiveauRisque({ niveau, libelle }: { niveau: string; libelle: string }) {
+  const { t } = useLang();
   const cls =
     niveau === "ELEVE"
       ? "bg-[#FBE7E7] text-[#9a2f2f]"
@@ -834,7 +839,7 @@ function NiveauRisque({ niveau, libelle }: { niveau: string; libelle: string }) 
         ? "bg-[#FBF0DD] text-[#96631a]"
         : "bg-[#E4F3EC] text-[#166b44]";
   return (
-    <span className={"rounded-full px-2.5 py-0.5 text-[12px] font-semibold " + cls}>{libelle}</span>
+    <span className={"rounded-full px-2.5 py-0.5 text-[12px] font-semibold " + cls}>{t(libelle)}</span>
   );
 }
 
