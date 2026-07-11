@@ -1,0 +1,153 @@
+"""Endpoints de l'app dossiers (étape 2 du processus métier)."""
+from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiResponse, extend_schema
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from apps.core.services import log_action
+
+from .models import Document, Dossier, StatutDossier
+from .permissions import STAFF_ROLES, IsProprietaireOrStaff
+from .serializers import (
+    DocumentSerializer,
+    DossierCreateSerializer,
+    DossierDetailSerializer,
+    DossierListSerializer,
+)
+from .services import generer_numero_dossier, soumettre_dossier
+
+
+class DossierViewSet(viewsets.ModelViewSet):
+    """
+    Dossiers d'immatriculation.
+    - Usager : ses propres dossiers (création, modification tant que brouillon).
+    - Agent / Admin : accès à tous les dossiers.
+    """
+
+    permission_classes = [IsAuthenticated, IsProprietaireOrStaff]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return DossierListSerializer
+        if self.action in ("create", "update", "partial_update"):
+            return DossierCreateSerializer
+        return DossierDetailSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Dossier.objects.select_related("vehicule", "usager").prefetch_related("documents")
+        if user.role in STAFF_ROLES:
+            pass  # accès à tout
+        else:
+            qs = qs.filter(usager=user)
+
+        params = self.request.query_params
+        if statut := params.get("statut"):
+            qs = qs.filter(statut=statut)
+        if type_veh := params.get("type_vehicule"):
+            qs = qs.filter(vehicule__type_vehicule=type_veh)
+        if recherche := params.get("q"):
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(numero_dossier__icontains=recherche)
+                | Q(vehicule__vin__icontains=recherche)
+                | Q(usager__nom__icontains=recherche)
+                | Q(usager__prenom__icontains=recherche)
+            )
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        if request.user.role != "USAGER":
+            raise PermissionDenied("Seul un usager peut créer un dossier.")
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        dossier = serializer.save(numero_dossier=generer_numero_dossier())
+        log_action("DOSSIER_CREE", user=self.request.user, objet=dossier,
+                   request=self.request, numero=dossier.numero_dossier)
+
+    def update(self, request, *args, **kwargs):
+        dossier = self.get_object()
+        if not dossier.est_modifiable:
+            raise ValidationError("Ce dossier n'est plus modifiable (déjà soumis).")
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        dossier = self.get_object()
+        if not dossier.est_modifiable:
+            raise ValidationError("Un dossier déjà soumis ne peut pas être supprimé.")
+        return super().destroy(request, *args, **kwargs)
+
+    @extend_schema(
+        request=None,
+        responses={200: OpenApiResponse(description="Dossier soumis"),
+                   400: OpenApiResponse(description="Pièces manquantes ou dates incohérentes")},
+    )
+    @action(detail=True, methods=["post"])
+    def soumettre(self, request, pk=None):
+        """Passe le dossier de Brouillon à Soumis puis déclenche la vérification auto (étape 3)."""
+        dossier = self.get_object()
+        if request.user.role != "USAGER" or dossier.usager_id != request.user.id:
+            raise PermissionDenied("Seul l'usager propriétaire peut soumettre son dossier.")
+
+        ok, problemes = soumettre_dossier(dossier)
+        if not ok:
+            return Response({"detail": "Soumission impossible.", "problemes": problemes},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        log_action("DOSSIER_SOUMIS", user=request.user, objet=dossier,
+                   request=request, numero=dossier.numero_dossier)
+
+        # Déclenche la vérification automatique (import local pour éviter un cycle).
+        from apps.verifications.services import lancer_verification
+        from apps.verifications.serializers import VerificationAutoSerializer
+
+        verif = lancer_verification(dossier, request=request)
+        dossier.refresh_from_db()
+        data = DossierDetailSerializer(dossier).data
+        data["verification"] = VerificationAutoSerializer(verif).data
+        return Response(data)
+
+
+class DocumentListCreateView(ListCreateAPIView):
+    """Liste et dépôt des pièces d'un dossier."""
+
+    serializer_class = DocumentSerializer
+    permission_classes = [IsAuthenticated, IsProprietaireOrStaff]
+
+    def get_dossier(self) -> Dossier:
+        dossier = get_object_or_404(Dossier, pk=self.kwargs["dossier_id"])
+        self.check_object_permissions(self.request, dossier)
+        return dossier
+
+    def get_queryset(self):
+        return self.get_dossier().documents.all()
+
+    def perform_create(self, serializer):
+        dossier = self.get_dossier()
+        if dossier.usager_id != self.request.user.id:
+            raise PermissionDenied("Seul l'usager propriétaire peut déposer des pièces.")
+        if not dossier.est_modifiable:
+            raise ValidationError("Impossible d'ajouter une pièce à un dossier déjà soumis.")
+        document = serializer.save(dossier=dossier)
+        log_action("DOCUMENT_AJOUTE", user=self.request.user, objet=dossier,
+                   request=self.request, type_document=document.type_document)
+
+
+class DocumentDetailView(RetrieveDestroyAPIView):
+    """Consultation et suppression d'une pièce."""
+
+    serializer_class = DocumentSerializer
+    permission_classes = [IsAuthenticated, IsProprietaireOrStaff]
+    queryset = Document.objects.select_related("dossier")
+
+    def perform_destroy(self, instance):
+        if instance.dossier.usager_id != self.request.user.id:
+            raise PermissionDenied("Seul l'usager propriétaire peut supprimer une pièce.")
+        if not instance.dossier.est_modifiable:
+            raise ValidationError("Impossible de supprimer une pièce d'un dossier déjà soumis.")
+        instance.delete()

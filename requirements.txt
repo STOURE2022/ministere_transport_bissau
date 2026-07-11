@@ -1,0 +1,19 @@
+# ── SNICV — Back-end (Django + DRF) ──
+# Django 5.2.x (récent) ou 6.0 requis pour Python 3.14
+Django>=5.2,<6.1
+djangorestframework>=3.15
+djangorestframework-simplejwt>=5.3
+drf-spectacular>=0.27
+django-cors-headers>=4.4
+django-environ>=0.11
+
+# Base de données PostgreSQL (psycopg 3). SQLite est utilisé en dev si DATABASE_URL n'est pas défini.
+psycopg[binary]>=3.2
+
+# Sécurité / certificat (utilisés dès l'étape 6 — installés dès maintenant)
+cryptography>=43.0        # signature RSA du certificat
+qrcode[pil]>=7.4          # génération du QR code
+
+# Tests
+pytest>=8.3
+pytest-django>=4.9
