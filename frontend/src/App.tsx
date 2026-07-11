@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { accueilPourRole, type Role } from "@/lib/types";
+import AccueilPublic from "@/pages/Accueil";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import VerifyOtp from "@/pages/VerifyOtp";
@@ -43,10 +44,23 @@ function RequireRole({ roles, children }: { roles: Role[]; children: React.React
   return <>{children}</>;
 }
 
-/** Accueil « / » : aiguille chaque rôle vers son espace. */
+/**
+ * Accueil « / » :
+ * - visiteur anonyme → page d'accueil publique premium,
+ * - usager connecté → son tableau de bord,
+ * - personnel connecté → son espace dédié.
+ */
 function Accueil() {
-  const { user } = useAuth();
-  if (user && user.role !== "USAGER") return <Navigate to={accueilPourRole(user.role)} replace />;
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <Ecran>
+        <Loader2 className="size-6 animate-spin" />
+      </Ecran>
+    );
+  }
+  if (!user) return <AccueilPublic />;
+  if (user.role !== "USAGER") return <Navigate to={accueilPourRole(user.role)} replace />;
   return <Dashboard />;
 }
 
@@ -64,15 +78,8 @@ export default function App() {
         {/* Vérification hors-ligne (signature validée localement) — sans authentification */}
         <Route path="/verify-offline" element={<VerifyOffline />} />
 
-        {/* Espace usager */}
-        <Route
-          path="/"
-          element={
-            <Protected>
-              <Accueil />
-            </Protected>
-          }
-        />
+        {/* Accueil public (anonyme) ou espace selon le rôle (connecté) */}
+        <Route path="/" element={<Accueil />} />
         <Route
           path="/dossiers/nouveau"
           element={
