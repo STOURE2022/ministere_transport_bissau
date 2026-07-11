@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import type { StatutDossier } from "@/lib/types";
 
 const CONFIG: Record<StatutDossier, { label: string; className: string }> = {
@@ -14,6 +15,7 @@ const CONFIG: Record<StatutDossier, { label: string; className: string }> = {
 };
 
 export function StatutBadge({ statut, className }: { statut: StatutDossier; className?: string }) {
+  const { t } = useLang();
   const cfg = CONFIG[statut] ?? CONFIG.BROUILLON;
   return (
     <span
@@ -24,7 +26,7 @@ export function StatutBadge({ statut, className }: { statut: StatutDossier; clas
       )}
     >
       <span className="size-1.5 rounded-full bg-current" />
-      {cfg.label}
+      {t(cfg.label)}
     </span>
   );
 }

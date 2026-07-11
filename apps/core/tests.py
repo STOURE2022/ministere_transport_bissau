@@ -42,3 +42,13 @@ class DashboardStatsTests(APITestCase):
     def test_force_ordre_refuse(self):
         self.client.force_authenticate(self.force)
         self.assertEqual(self.client.get(self.url).status_code, status.HTTP_403_FORBIDDEN)
+
+
+class PublicStatsTests(APITestCase):
+    def test_acces_public_sans_auth(self):
+        resp = self.client.get(reverse("v1:core:stats-public"))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        for cle in ("vehicules", "immatriculations", "certificats_actifs",
+                    "controles_total", "regions"):
+            self.assertIn(cle, resp.data)
+        self.assertEqual(resp.data["regions"], 9)

@@ -8,6 +8,7 @@ import {
   Siren,
 } from "lucide-react";
 import { formatDate, formatDateTime } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import type { ResultatScan, VerificationResult } from "@/lib/types";
 import { PlaqueImmatriculation } from "@/components/PlaqueImmatriculation";
 
@@ -28,6 +29,7 @@ export const CONFIG_RESULTAT: Record<ResultatScan, ConfigResultat> = {
 
 /** Carte de résultat d'une vérification (QR ou plaque), réutilisable. */
 export function ResultatVerification({ res }: { res: VerificationResult }) {
+  const { t } = useLang();
   const cfg = CONFIG_RESULTAT[res.resultat] ?? CONFIG_RESULTAT.INTROUVABLE;
   const Icone = cfg.icone;
   const cert = res.certificat;
@@ -41,10 +43,10 @@ export function ResultatVerification({ res }: { res: VerificationResult }) {
           <Siren className="size-7 shrink-0 animate-pulse" />
           <div className="min-w-0">
             <div className="font-serif text-lg font-bold tracking-tight">
-              ⚠ {res.alerte.type_libelle.toUpperCase()}
+              ⚠ {t(res.alerte.type_libelle).toUpperCase()}
             </div>
             <div className="text-[13px] opacity-95">
-              {res.alerte.motif || "Ce véhicule fait l'objet d'un signalement actif."}
+              {res.alerte.motif || t("Ce véhicule fait l'objet d'un signalement actif.")}
               {res.alerte.reference ? ` · Réf. ${res.alerte.reference}` : ""}
             </div>
           </div>
@@ -57,8 +59,8 @@ export function ResultatVerification({ res }: { res: VerificationResult }) {
           <Icone className="size-8" />
         </span>
         <div>
-          <h2 className="font-serif text-xl font-bold tracking-tight">{cfg.titre}</h2>
-          <p className="mt-0.5 text-[13.5px] opacity-90">{res.message}</p>
+          <h2 className="font-serif text-xl font-bold tracking-tight">{t(cfg.titre)}</h2>
+          <p className="mt-0.5 text-[13.5px] opacity-90">{t(res.message)}</p>
         </div>
       </div>
 
@@ -68,7 +70,7 @@ export function ResultatVerification({ res }: { res: VerificationResult }) {
           {parPlaque && res.immatriculation && (
             <span className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-[12px] font-semibold text-primary-deep">
               <ScanLine className="size-3.5" />
-              Trouvé via immatriculation · {res.immatriculation}
+              {t("Trouvé via immatriculation")} · {res.immatriculation}
             </span>
           )}
 
@@ -77,29 +79,29 @@ export function ResultatVerification({ res }: { res: VerificationResult }) {
               <PlaqueImmatriculation numero={cert.immatriculation} className="max-w-[220px]" />
             )}
             <dl className="grid grid-cols-2 gap-x-5 gap-y-3.5">
-              {cert.proprietaire && <Info label="Titulaire" valeur={cert.proprietaire} />}
-              {cert.marque_modele && <Info label="Véhicule" valeur={cert.marque_modele} />}
-              {cert.annee != null && <Info label="Année" valeur={String(cert.annee)} />}
-              <Info label="Statut" valeur={cert.statut} />
-              <Info label="Assurance" valeur={formatDate(cert.assurance_echeance)} />
-              <Info label="Contrôle technique" valeur={formatDate(cert.ct_echeance)} />
-              <Info label="Émis le" valeur={formatDate(cert.date_emission)} />
-              <Info label="Valable jusqu'au" valeur={formatDate(cert.date_expiration)} />
+              {cert.proprietaire && <Info label={t("Titulaire")} valeur={cert.proprietaire} />}
+              {cert.marque_modele && <Info label={t("Véhicule")} valeur={cert.marque_modele} />}
+              {cert.annee != null && <Info label={t("Année")} valeur={String(cert.annee)} />}
+              <Info label={t("Statut")} valeur={cert.statut} />
+              <Info label={t("Assurance")} valeur={formatDate(cert.assurance_echeance)} />
+              <Info label={t("Contrôle technique")} valeur={formatDate(cert.ct_echeance)} />
+              <Info label={t("Émis le")} valeur={formatDate(cert.date_emission)} />
+              <Info label={t("Valable jusqu'au")} valeur={formatDate(cert.date_expiration)} />
             </dl>
           </div>
         </div>
       ) : (
         <div className="px-6 py-8 text-center text-sm text-muted-foreground">
           {cfg.fiable
-            ? "Aucune donnée à afficher."
-            : "Aucune donnée véhicule n'est communiquée pour ce résultat."}
+            ? t("Aucune donnée à afficher.")
+            : t("Aucune donnée véhicule n'est communiquée pour ce résultat.")}
         </div>
       )}
 
       {/* Pied : horodatage */}
       <div className="border-t border-border bg-muted/40 px-6 py-3 text-center text-[11.5px] text-muted-foreground tnum">
-        Vérifié le {formatDateTime(res.verifie_le)}
-        {parPlaque ? " · méthode : immatriculation" : ""}
+        {t("Vérifié le")} {formatDateTime(res.verifie_le)}
+        {parPlaque ? ` · ${t("méthode : immatriculation")}` : ""}
       </div>
     </div>
   );

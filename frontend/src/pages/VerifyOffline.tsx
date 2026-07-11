@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CloudOff, Loader2, ShieldCheck, WifiOff } from "lucide-react";
 import type { CertificatPublic, ResultatScan, VerificationResult } from "@/lib/types";
+import { useLang } from "@/lib/i18n";
 import { ResultatVerification } from "@/components/ResultatVerification";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +49,7 @@ function construireResultat(r: ResultatHorsLigne): VerificationResult {
 }
 
 export default function VerifyOffline() {
+  const { t } = useLang();
   const [etatCle, setEtatCle] = useState<EtatCle>("chargement");
   const cle = useRef<CryptoKey | null>(null);
   const [jeton, setJeton] = useState("");
@@ -81,11 +83,11 @@ export default function VerifyOffline() {
     setErreur(null);
     setRes(null);
     if (!cle.current) {
-      setErreur("Clé publique indisponible. Connectez-vous une fois à Internet pour la provisionner.");
+      setErreur(t("Clé publique indisponible. Connectez-vous une fois à Internet pour la provisionner."));
       return;
     }
     if (!jeton.trim()) {
-      setErreur("Collez le jeton hors-ligne du certificat.");
+      setErreur(t("Collez le jeton hors-ligne du certificat."));
       return;
     }
     setVerif(true);
@@ -93,7 +95,7 @@ export default function VerifyOffline() {
       const r = await verifierJetonHorsLigne(jeton, cle.current);
       setRes(construireResultat(r));
     } catch {
-      setErreur("Jeton illisible ou malformé. Vérifiez le contenu scanné.");
+      setErreur(t("Jeton illisible ou malformé. Vérifiez le contenu scanné."));
     } finally {
       setVerif(false);
     }
@@ -108,7 +110,7 @@ export default function VerifyOffline() {
         </span>
         <div>
           <div className="font-serif text-base font-bold leading-tight tracking-wide">SNICV</div>
-          <div className="text-[11px] text-[#B9CBE6]">Vérification hors-ligne · Guinée-Bissau</div>
+          <div className="text-[11px] text-[#B9CBE6]">{t("Vérification hors-ligne · Guinée-Bissau")}</div>
         </div>
       </div>
 
@@ -118,12 +120,11 @@ export default function VerifyOffline() {
           <div className="mb-1 flex items-center gap-2">
             <WifiOff className="size-5 text-primary" />
             <h1 className="font-serif text-lg font-bold tracking-tight text-primary-deep">
-              Contrôle hors réseau
+              {t("Contrôle hors réseau")}
             </h1>
           </div>
           <p className="mb-4 text-[13px] text-muted-foreground">
-            Validez la signature d'un certificat localement, sans connexion. Collez le jeton
-            hors-ligne encodé dans le QR du certificat.
+            {t("Validez la signature d'un certificat localement, sans connexion. Collez le jeton hors-ligne encodé dans le QR du certificat.")}
           </p>
 
           <EtatCleBadge etat={etatCle} />
@@ -141,7 +142,7 @@ export default function VerifyOffline() {
 
           <Button onClick={verifier} disabled={verif || etatCle === "chargement"} className="mt-4 w-full">
             {verif ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
-            Vérifier hors-ligne
+            {t("Vérifier hors-ligne")}
           </Button>
         </div>
 
@@ -152,17 +153,16 @@ export default function VerifyOffline() {
             <div className="flex items-start gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[12px] text-[#B9CBE6]">
               <CloudOff className="mt-0.5 size-4 shrink-0" />
               <span>
-                Mode hors-ligne : l'authenticité de la signature est garantie, mais une éventuelle
-                révocation récente n'est vérifiable qu'en ligne.
+                {t("Mode hors-ligne : l'authenticité de la signature est garantie, mais une éventuelle révocation récente n'est vérifiable qu'en ligne.")}
               </span>
             </div>
           </div>
         )}
 
         <p className="text-center text-[11px] text-[#8ea6c9]">
-          Ministère des Transports — République de Guinée-Bissau
+          {t("Ministère des Transports — République de Guinée-Bissau")}
           <br />
-          Vérification cryptographique RSA-2048 · SHA-256
+          {t("Vérification cryptographique RSA-2048 · SHA-256")}
         </p>
       </div>
     </div>
@@ -170,6 +170,7 @@ export default function VerifyOffline() {
 }
 
 function EtatCleBadge({ etat }: { etat: EtatCle }) {
+  const { t } = useLang();
   const map: Record<EtatCle, { texte: string; classe: string }> = {
     chargement: { texte: "Provisionnement de la clé…", classe: "bg-muted text-muted-foreground" },
     "en-ligne": { texte: "Clé publique à jour (en ligne)", classe: "bg-[#e6f4ec] text-[#1e8e5a]" },
@@ -180,7 +181,7 @@ function EtatCleBadge({ etat }: { etat: EtatCle }) {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold ${classe}`}>
       <span className="size-1.5 rounded-full bg-current" />
-      {texte}
+      {t(texte)}
     </span>
   );
 }

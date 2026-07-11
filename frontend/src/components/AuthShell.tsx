@@ -1,4 +1,5 @@
 import { ShieldCheck } from "lucide-react";
+import { useLang, LangSwitcher } from "@/lib/i18n";
 
 export function AuthShell({
   title,
@@ -11,6 +12,7 @@ export function AuthShell({
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
+  const { t } = useLang();
   return (
     <div className="flex min-h-screen items-center justify-center bg-navy px-4 py-10">
       <div className="w-full max-w-md">
@@ -21,9 +23,10 @@ export function AuthShell({
           <div>
             <div className="font-serif text-lg font-bold tracking-wide">SNICV</div>
             <div className="text-[12px] text-[#B9CBE6]">
-              Immatriculation des véhicules · Guinée-Bissau
+              {t("Immatriculation des véhicules · Guinée-Bissau")}
             </div>
           </div>
+          <LangSwitcher className="ml-auto text-white" />
         </div>
         <div className="rounded-2xl bg-card p-7 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
           <h1 className="font-serif text-xl font-bold tracking-tight text-foreground">{title}</h1>

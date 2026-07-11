@@ -1,10 +1,31 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { api } from "@/lib/api";
+import { useLang, LangSwitcher } from "@/lib/i18n";
+
+interface PublicStats {
+  vehicules: number;
+  immatriculations: number;
+  certificats_actifs: number;
+  controles_total: number;
+  regions: number;
+}
 
 /**
  * Page d'accueil publique du SNICV (avant connexion).
  * Styles isolés sous `.accueil-root` pour ne pas fuiter sur le reste de l'app.
+ * Chiffres-clés tirés en direct de l'API publique `/stats/public/`.
  */
 export default function Accueil() {
+  const { t, n } = useLang();
+  const [stats, setStats] = useState<PublicStats | null>(null);
+
+  useEffect(() => {
+    api.get<PublicStats>("/stats/public/").then((r) => setStats(r.data)).catch(() => setStats(null));
+  }, []);
+
+  const chiffre = (v: number | undefined) => (stats && v != null ? n(v) : "…");
+
   return (
     <div className="accueil-root">
       <style>{CSS}</style>
@@ -20,18 +41,18 @@ export default function Accueil() {
             </span>
             <span>
               <span className="wm">SNICV</span>
-              <span className="sub">Ministère des Transports · Guinée-Bissau</span>
+              <span className="sub">{t("Ministère des Transports · Guinée-Bissau")}</span>
             </span>
           </Link>
           <nav className="links">
-            <a href="#processus">Le dispositif</a>
-            <a href="#espaces">Espaces</a>
-            <a href="#securite">Sécurité</a>
-            <a href="#couverture">Couverture</a>
+            <a href="#processus">{t("Le dispositif")}</a>
+            <a href="#espaces">{t("Espaces")}</a>
+            <a href="#securite">{t("Sécurité")}</a>
+            <a href="#couverture">{t("Couverture")}</a>
           </nav>
           <div className="right">
-            <span className="lang"><b>PT</b> · FR</span>
-            <Link className="btn btn-ghost" to="/login">Accéder à mon espace</Link>
+            <LangSwitcher className="text-white" />
+            <Link className="btn btn-ghost" to="/login">{t("Accéder à mon espace")}</Link>
           </div>
         </div>
       </header>
@@ -49,25 +70,24 @@ export default function Accueil() {
         <div className="wrap hero-grid">
           <div>
             <div className="rv" style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <span className="eyebrow">République de Guinée-Bissau</span>
+              <span className="eyebrow">{t("République de Guinée-Bissau")}</span>
               <span className="tricolor"><i className="r" /><i className="y" /><i className="g" /></span>
             </div>
             <h1 className="rv d1" style={{ marginTop: 18 }}>
-              Le registre national des véhicules,<br />
-              <span className="accent">infalsifiable et vérifiable en 2&nbsp;secondes.</span>
+              {t("Le registre national des véhicules,")}<br />
+              <span className="accent">{t("infalsifiable et vérifiable en 2 secondes.")}</span>
             </h1>
             <p className="lede rv d2">
-              Immatriculation, certificat numérique signé et contrôle routier temps réel —
-              une plateforme souveraine du Ministère des Transports.
+              {t("Immatriculation, certificat numérique signé et contrôle routier temps réel — une plateforme souveraine du Ministère des Transports.")}
             </p>
             <div className="hero-cta rv d2">
-              <Link className="btn btn-gold" to="/verify-offline">✦ Vérifier un certificat</Link>
-              <Link className="btn btn-ghost" to="/login">Espace agent / administration</Link>
+              <Link className="btn btn-gold" to="/verify-offline">{t("✦ Vérifier un certificat")}</Link>
+              <Link className="btn btn-ghost" to="/login">{t("Espace agent / administration")}</Link>
             </div>
             <div className="hero-meta rv d3">
-              <div className="m"><div className="n">RSA&nbsp;<b>2048</b></div><div className="l">signature cryptographique</div></div>
-              <div className="m"><div className="n">&lt;&nbsp;2&nbsp;s</div><div className="l">vérification terrain</div></div>
-              <div className="m"><div className="n">100&nbsp;%</div><div className="l">hors-ligne possible</div></div>
+              <div className="m"><div className="n">RSA&nbsp;<b>2048</b></div><div className="l">{t("signature cryptographique")}</div></div>
+              <div className="m"><div className="n">&lt;&nbsp;2&nbsp;s</div><div className="l">{t("vérification terrain")}</div></div>
+              <div className="m"><div className="n">100&nbsp;%</div><div className="l">{t("hors-ligne possible")}</div></div>
             </div>
           </div>
 
@@ -87,32 +107,32 @@ export default function Accueil() {
                 <div className="rh">
                   <span className="ic">✓</span>
                   <div>
-                    <div className="rt">Certificat authentique</div>
-                    <div className="rs">Signature RSA valide · statut actif</div>
+                    <div className="rt">{t("Certificat authentique")}</div>
+                    <div className="rs">{t("Signature RSA valide · statut actif")}</div>
                   </div>
                 </div>
                 <div className="rb">
-                  <div className="f"><div className="k">Titulaire</div><div className="v">Fatumata Djaló</div></div>
-                  <div className="f"><div className="k">Véhicule</div><div className="v">Toyota Hilux</div></div>
-                  <div className="f"><div className="k">Année · Énergie</div><div className="v">2023 · Diesel</div></div>
-                  <div className="f"><div className="k">Valable jusqu'au</div><div className="v">14 juin 2030</div></div>
+                  <div className="f"><div className="k">{t("Titulaire")}</div><div className="v">Fatumata Djaló</div></div>
+                  <div className="f"><div className="k">{t("Véhicule")}</div><div className="v">Toyota Hilux</div></div>
+                  <div className="f"><div className="k">{t("Année · Énergie")}</div><div className="v">2023 · Diesel</div></div>
+                  <div className="f"><div className="k">{t("Valable jusqu'au")}</div><div className="v">14/06/2030</div></div>
                 </div>
-                <div className="foot">Vérifié le 11 juillet 2026 à 14:32 · Contrôle routier — Bissau</div>
+                <div className="foot">{t("Vérifié le 11 juillet 2026 à 14:32 · Contrôle routier — Bissau")}</div>
               </div>
-              <div className="sec"><span className="lock">🔒</span> Empreinte SHA-256 recalculée localement — aucune donnée modifiable.</div>
+              <div className="sec"><span className="lock">🔒</span> {t("Empreinte SHA-256 recalculée localement — aucune donnée modifiable.")}</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ══ KPI ══ */}
+      {/* ══ KPI (chiffres réels du registre) ══ */}
       <div className="kpis">
         <div className="wrap">
           <div className="kpi-grid">
-            <div className="kpi"><div className="n"><b>128</b>&nbsp;540</div><div className="l">Véhicules immatriculés</div><div className="d">+ 3 210 ce mois</div></div>
-            <div className="kpi"><div className="n"><b>96</b>&nbsp;712</div><div className="l">Certificats QR actifs</div><div className="d">signés RSA-2048</div></div>
-            <div className="kpi"><div className="n"><b>1,2</b>&nbsp;M</div><div className="l">Contrôles vérifiés</div><div className="d">forces de l'ordre</div></div>
-            <div className="kpi"><div className="n"><b>9</b></div><div className="l">Régions couvertes</div><div className="d">tout le territoire</div></div>
+            <div className="kpi"><div className="n">{chiffre(stats?.immatriculations)}</div><div className="l">{t("Véhicules immatriculés")}</div><div className="d">{chiffre(stats?.vehicules)} {t("au total")}</div></div>
+            <div className="kpi"><div className="n">{chiffre(stats?.certificats_actifs)}</div><div className="l">{t("Certificats QR actifs")}</div><div className="d">{t("signés RSA-2048")}</div></div>
+            <div className="kpi"><div className="n">{chiffre(stats?.controles_total)}</div><div className="l">{t("Contrôles vérifiés")}</div><div className="d">{t("forces de l'ordre")}</div></div>
+            <div className="kpi"><div className="n">{chiffre(stats?.regions)}</div><div className="l">{t("Régions couvertes")}</div><div className="d">{t("tout le territoire")}</div></div>
           </div>
         </div>
       </div>
@@ -121,15 +141,15 @@ export default function Accueil() {
       <section id="processus">
         <div className="wrap">
           <div className="sec-head">
-            <span className="eyebrow">Du dépôt au certificat</span>
-            <h2>Un parcours dématérialisé, du dossier au QR signé</h2>
-            <p>Chaque véhicule suit un circuit tracé et sécurisé : le citoyen dépose, l'agent valide, l'État certifie.</p>
+            <span className="eyebrow">{t("Du dépôt au certificat")}</span>
+            <h2>{t("Un parcours dématérialisé, du dossier au QR signé")}</h2>
+            <p>{t("Chaque véhicule suit un circuit tracé et sécurisé : le citoyen dépose, l'agent valide, l'État certifie.")}</p>
           </div>
           <div className="steps">
-            <div className="step"><span className="no">01</span><h3>Dépôt du dossier</h3><p>Le titulaire crée son compte et téléverse assurance, contrôle technique et facture.</p></div>
-            <div className="step"><span className="no">02</span><h3>Vérification &amp; validation</h3><p>Contrôle automatique anti-fraude puis validation par un agent habilité.</p></div>
-            <div className="step"><span className="no">03</span><h3>Immatriculation</h3><p>Attribution d'une plaque nationale format <b>GW</b> et enregistrement au registre.</p></div>
-            <div className="step"><span className="no">04</span><h3>Certificat QR signé</h3><p>Génération d'un certificat numérique signé, vérifiable en ligne comme hors-ligne.</p></div>
+            <div className="step"><span className="no">01</span><h3>{t("Dépôt du dossier")}</h3><p>{t("Le titulaire crée son compte et téléverse assurance, contrôle technique et facture.")}</p></div>
+            <div className="step"><span className="no">02</span><h3>{t("Vérification & validation")}</h3><p>{t("Contrôle automatique anti-fraude puis validation par un agent habilité.")}</p></div>
+            <div className="step"><span className="no">03</span><h3>{t("Immatriculation")}</h3><p>{t("Attribution d'une plaque nationale format")} <b>GW</b> {t("et enregistrement au registre.")}</p></div>
+            <div className="step"><span className="no">04</span><h3>{t("Certificat QR signé")}</h3><p>{t("Génération d'un certificat numérique signé, vérifiable en ligne comme hors-ligne.")}</p></div>
           </div>
         </div>
       </section>
@@ -138,18 +158,18 @@ export default function Accueil() {
       <section id="espaces" style={{ background: "var(--paper-deep)" }}>
         <div className="wrap">
           <div className="sec-head">
-            <span className="eyebrow">Une plateforme, quatre métiers</span>
-            <h2>Chaque acteur, son espace dédié</h2>
+            <span className="eyebrow">{t("Une plateforme, quatre métiers")}</span>
+            <h2>{t("Chaque acteur, son espace dédié")}</h2>
           </div>
           <div className="spaces">
             <Link className="space" to="/login"><div className="ico" style={{ background: "var(--navy-2)" }}>👤</div>
-              <div><h3>Usager</h3><p>Déposer un dossier, suivre son traitement, télécharger son certificat officiel.</p><span className="go">Créer mon dossier →</span></div></Link>
+              <div><h3>{t("Usager")}</h3><p>{t("Déposer un dossier, suivre son traitement, télécharger son certificat officiel.")}</p><span className="go">{t("Créer mon dossier →")}</span></div></Link>
             <Link className="space" to="/login"><div className="ico" style={{ background: "var(--green)" }}>🗂️</div>
-              <div><h3>Agent instructeur</h3><p>Instruire les dossiers, immatriculer, émettre et révoquer les certificats.</p><span className="go">File de validation →</span></div></Link>
+              <div><h3>{t("Agent instructeur")}</h3><p>{t("Instruire les dossiers, immatriculer, émettre et révoquer les certificats.")}</p><span className="go">{t("File de validation →")}</span></div></Link>
             <Link className="space" to="/login"><div className="ico" style={{ background: "#a1201f" }}>🛡️</div>
-              <div><h3>Forces de l'ordre</h3><p>Vérifier par QR ou par plaque, consulter les alertes véhicules volés.</p><span className="go">Console de contrôle →</span></div></Link>
+              <div><h3>{t("Forces de l'ordre")}</h3><p>{t("Vérifier par QR ou par plaque, consulter les alertes véhicules volés.")}</p><span className="go">{t("Console de contrôle →")}</span></div></Link>
             <Link className="space" to="/login"><div className="ico" style={{ background: "var(--gold)", color: "#2a1e02" }}>📊</div>
-              <div><h3>Administration</h3><p>Piloter le parc national, suivre les indicateurs et la fraude en temps réel.</p><span className="go">Tableau de bord →</span></div></Link>
+              <div><h3>{t("Administration")}</h3><p>{t("Piloter le parc national, suivre les indicateurs et la fraude en temps réel.")}</p><span className="go">{t("Tableau de bord →")}</span></div></Link>
           </div>
         </div>
       </section>
@@ -158,18 +178,18 @@ export default function Accueil() {
       <section id="securite" className="security">
         <div className="wrap sec-grid">
           <div>
-            <span className="eyebrow">Confiance par la cryptographie</span>
-            <h2 style={{ fontSize: "clamp(1.7rem,3vw,2.3rem)", marginTop: 12 }}>Un certificat que l'on ne peut ni imiter, ni altérer</h2>
+            <span className="eyebrow">{t("Confiance par la cryptographie")}</span>
+            <h2 style={{ fontSize: "clamp(1.7rem,3vw,2.3rem)", marginTop: 12 }}>{t("Un certificat que l'on ne peut ni imiter, ni altérer")}</h2>
             <div className="sec-list">
-              <div className="sec-item"><span className="b">🔑</span><div><h3>Signature RSA-2048</h3><p>Chaque certificat est signé par la clé souveraine de l'État. Toute retouche invalide la signature.</p></div></div>
-              <div className="sec-item"><span className="b">#️⃣</span><div><h3>Empreinte SHA-256</h3><p>Les données sont scellées par une empreinte recalculée à chaque contrôle.</p></div></div>
-              <div className="sec-item"><span className="b">📶</span><div><h3>Vérification hors-ligne</h3><p>Sur le terrain sans réseau, l'agent valide la signature localement, en toute autonomie.</p></div></div>
-              <div className="sec-item"><span className="b">🚨</span><div><h3>Alerte véhicules signalés</h3><p>Un véhicule volé ou recherché déclenche une alerte immédiate au contrôle.</p></div></div>
+              <div className="sec-item"><span className="b">🔑</span><div><h3>{t("Signature RSA-2048")}</h3><p>{t("Chaque certificat est signé par la clé souveraine de l'État. Toute retouche invalide la signature.")}</p></div></div>
+              <div className="sec-item"><span className="b">#️⃣</span><div><h3>{t("Empreinte SHA-256")}</h3><p>{t("Les données sont scellées par une empreinte recalculée à chaque contrôle.")}</p></div></div>
+              <div className="sec-item"><span className="b">📶</span><div><h3>{t("Vérification hors-ligne")}</h3><p>{t("Sur le terrain sans réseau, l'agent valide la signature localement, en toute autonomie.")}</p></div></div>
+              <div className="sec-item"><span className="b">🚨</span><div><h3>{t("Alerte véhicules signalés")}</h3><p>{t("Un véhicule volé ou recherché déclenche une alerte immédiate au contrôle.")}</p></div></div>
             </div>
           </div>
           <div className="shield">
             <div className="big">🛡️</div>
-            <div className="cap">Scellé numérique de l'État</div>
+            <div className="cap">{t("Scellé numérique de l'État")}</div>
           </div>
         </div>
       </section>
@@ -178,12 +198,12 @@ export default function Accueil() {
       <section id="couverture">
         <div className="wrap cov-grid">
           <div>
-            <span className="eyebrow">Présence nationale</span>
-            <h2 style={{ fontSize: "clamp(1.7rem,3vw,2.3rem)", marginTop: 12 }}>Un dispositif déployé sur tout le territoire</h2>
-            <p style={{ color: "var(--slate)", marginTop: 14, fontSize: 15 }}>Des centres d'immatriculation et de contrôle connectés au registre national, de la capitale aux régions.</p>
+            <span className="eyebrow">{t("Présence nationale")}</span>
+            <h2 style={{ fontSize: "clamp(1.7rem,3vw,2.3rem)", marginTop: 12 }}>{t("Un dispositif déployé sur tout le territoire")}</h2>
+            <p style={{ color: "var(--slate)", marginTop: 14, fontSize: 15 }}>{t("Des centres d'immatriculation et de contrôle connectés au registre national, de la capitale aux régions.")}</p>
             <div style={{ display: "flex", gap: 14, marginTop: 24, flexWrap: "wrap" }}>
-              <Link className="btn btn-navy" to="/login">Trouver un centre</Link>
-              <Link className="btn btn-outline" to="/login">Contacter le ministère</Link>
+              <Link className="btn btn-navy" to="/login">{t("Trouver un centre")}</Link>
+              <Link className="btn btn-outline" to="/login">{t("Contacter le ministère")}</Link>
             </div>
           </div>
           <div className="regions">
@@ -204,12 +224,12 @@ export default function Accueil() {
         <div className="wrap">
           <div className="final">
             <span className="star">★</span>
-            <span className="eyebrow" style={{ color: "var(--gold-soft)" }}>Ministère des Transports</span>
-            <h2 style={{ marginTop: 14 }}>Un registre moderne, au service<br />de la sécurité routière nationale</h2>
-            <p>Émettre, vérifier et sécuriser les certificats des véhicules de Guinée-Bissau — sur une plateforme conçue pour l'échelle nationale.</p>
+            <span className="eyebrow" style={{ color: "var(--gold-soft)" }}>{t("Ministère des Transports")}</span>
+            <h2 style={{ marginTop: 14 }}>{t("Un registre moderne, au service")}<br />{t("de la sécurité routière nationale")}</h2>
+            <p>{t("Émettre, vérifier et sécuriser les certificats des véhicules de Guinée-Bissau — sur une plateforme conçue pour l'échelle nationale.")}</p>
             <div className="cta">
-              <Link className="btn btn-gold" to="/verify-offline">✦ Vérifier un certificat</Link>
-              <Link className="btn btn-ghost" to="/login">Accéder à mon espace</Link>
+              <Link className="btn btn-gold" to="/verify-offline">{t("✦ Vérifier un certificat")}</Link>
+              <Link className="btn btn-ghost" to="/login">{t("Accéder à mon espace")}</Link>
             </div>
           </div>
         </div>
@@ -221,14 +241,14 @@ export default function Accueil() {
           <div className="foot-grid">
             <div className="col">
               <h4>SNICV</h4>
-              <p>Système National d'Immatriculation et de Contrôle des Véhicules — Ministère des Transports de la République de Guinée-Bissau.</p>
+              <p>{t("Système National d'Immatriculation et de Contrôle des Véhicules — Ministère des Transports de la République de Guinée-Bissau.")}</p>
             </div>
-            <div className="col"><h4>Plateforme</h4><ul><li><Link to="/verify-offline">Vérifier un certificat</Link></li><li><Link to="/verify-offline">Mode hors-ligne</Link></li><li><Link to="/login">Espace usager</Link></li><li><Link to="/login">Espace agent</Link></li></ul></div>
-            <div className="col"><h4>Le dispositif</h4><ul><li>Immatriculation</li><li>Certificat QR</li><li>Contrôle routier</li><li>Signalements</li></ul></div>
-            <div className="col"><h4>Institution</h4><ul><li>Ministère des Transports</li><li>Centres régionaux</li><li>Mentions légales</li><li>Contact</li></ul></div>
+            <div className="col"><h4>{t("Plateforme")}</h4><ul><li><Link to="/verify-offline">{t("Vérifier un certificat")}</Link></li><li><Link to="/verify-offline">{t("Mode hors-ligne")}</Link></li><li><Link to="/login">{t("Espace usager")}</Link></li><li><Link to="/login">{t("Espace agent")}</Link></li></ul></div>
+            <div className="col"><h4>{t("Le dispositif")}</h4><ul><li>{t("Immatriculation")}</li><li>{t("Certificat QR")}</li><li>{t("Contrôle routier")}</li><li>{t("Signalements")}</li></ul></div>
+            <div className="col"><h4>{t("Institution")}</h4><ul><li>{t("Ministère des Transports")}</li><li>{t("Centres régionaux")}</li><li>{t("Mentions légales")}</li><li>{t("Contact")}</li></ul></div>
           </div>
           <div className="foot-bar">
-            <span>© 2026 République de Guinée-Bissau — Ministère des Transports</span>
+            <span>{t("© 2026 République de Guinée-Bissau — Ministère des Transports")}</span>
             <span className="tricolor"><i className="r" /><i className="y" /><i className="g" /></span>
           </div>
         </div>

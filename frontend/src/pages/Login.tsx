@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { messageErreur } from "@/lib/api";
 import { accueilPourRole } from "@/lib/types";
+import { useLang } from "@/lib/i18n";
 import { AuthShell, FieldError } from "@/components/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 
 export default function Login() {
   const { login } = useAuth();
+  const { t } = useLang();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { message?: string } };
 
@@ -27,7 +29,7 @@ export default function Login() {
       const u = await login(email, password);
       navigate(accueilPourRole(u.role));
     } catch (err) {
-      setErreur(messageErreur(err, "E-mail ou mot de passe incorrect."));
+      setErreur(messageErreur(err, t("E-mail ou mot de passe incorrect.")));
     } finally {
       setChargement(false);
     }
@@ -35,13 +37,13 @@ export default function Login() {
 
   return (
     <AuthShell
-      title="Connexion"
-      subtitle="Accédez à votre espace de suivi de dossier."
+      title={t("Connexion")}
+      subtitle={t("Accédez à votre espace de suivi de dossier.")}
       footer={
         <>
-          Pas encore de compte ?{" "}
+          {t("Pas encore de compte ?")}{" "}
           <Link to="/register" className="font-semibold text-white underline underline-offset-4">
-            Créer un compte
+            {t("Créer un compte")}
           </Link>
         </>
       }
@@ -53,7 +55,7 @@ export default function Login() {
       )}
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="email">Adresse e-mail</Label>
+          <Label htmlFor="email">{t("Adresse e-mail")}</Label>
           <Input
             id="email"
             type="email"
@@ -65,7 +67,7 @@ export default function Login() {
           />
         </div>
         <div>
-          <Label htmlFor="password">Mot de passe</Label>
+          <Label htmlFor="password">{t("Mot de passe")}</Label>
           <Input
             id="password"
             type="password"
@@ -79,7 +81,7 @@ export default function Login() {
         <FieldError message={erreur} />
         <Button type="submit" className="w-full" disabled={chargement}>
           {chargement && <Loader2 className="size-4 animate-spin" />}
-          Se connecter
+          {t("Se connecter")}
         </Button>
       </form>
     </AuthShell>

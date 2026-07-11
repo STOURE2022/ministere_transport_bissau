@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Car, FileText, Loader2, Plus } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import type { DossierListItem, Paginated } from "@/lib/types";
 import { Layout } from "@/components/Layout";
 import { StatutBadge } from "@/components/StatutBadge";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export default function Dashboard() {
+  const { t } = useLang();
   const [dossiers, setDossiers] = useState<DossierListItem[]>([]);
   const [chargement, setChargement] = useState(true);
 
@@ -24,16 +26,16 @@ export default function Dashboard() {
     <Layout>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="eyebrow">Espace usager</div>
-          <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight">Mes dossiers</h1>
+          <div className="eyebrow">{t("Espace usager")}</div>
+          <h1 className="mt-1.5 font-serif text-2xl font-bold tracking-tight">{t("Mes dossiers")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Suivez vos demandes d'immatriculation en temps réel.
+            {t("Suivez vos demandes d'immatriculation en temps réel.")}
           </p>
         </div>
         <Button asChild>
           <Link to="/dossiers/nouveau">
             <Plus className="size-4" />
-            Nouveau dossier
+            {t("Nouveau dossier")}
           </Link>
         </Button>
       </div>
@@ -48,15 +50,15 @@ export default function Dashboard() {
             <Car className="size-7" />
           </span>
           <div>
-            <p className="font-semibold">Aucun dossier pour le moment</p>
+            <p className="font-semibold">{t("Aucun dossier pour le moment")}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Créez votre première demande d'immatriculation.
+              {t("Créez votre première demande d'immatriculation.")}
             </p>
           </div>
           <Button asChild className="mt-1">
             <Link to="/dossiers/nouveau">
               <Plus className="size-4" />
-              Créer un dossier
+              {t("Créer un dossier")}
             </Link>
           </Button>
         </Card>
@@ -86,8 +88,8 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-[12px] text-muted-foreground">
-                  <span>{d.nb_documents} pièce(s)</span>
-                  <span className="tnum">Créé le {formatDate(d.date_creation)}</span>
+                  <span>{d.nb_documents} {t("pièce(s)")}</span>
+                  <span className="tnum">{t("Créé le")} {formatDate(d.date_creation)}</span>
                 </div>
               </Card>
             </Link>

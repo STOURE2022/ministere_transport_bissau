@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import type { StatutDossier } from "@/lib/types";
 
 const ETAPES = ["Dépôt", "Vérification", "Validation", "Immatriculation", "Certificat"];
@@ -27,6 +28,7 @@ function statutVersEtape(statut: StatutDossier): number {
 }
 
 export function Stepper({ statut }: { statut: StatutDossier }) {
+  const { t } = useLang();
   const courant = statutVersEtape(statut);
   const rejete = statut === "REJETE";
 
@@ -55,7 +57,7 @@ export function Stepper({ statut }: { statut: StatutDossier }) {
                   done || active ? "text-foreground" : "text-faint"
                 )}
               >
-                {etape}
+                {t(etape)}
               </span>
             </div>
             {i < ETAPES.length - 1 && (

@@ -3,7 +3,7 @@ from django.db.models import Count
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -28,6 +28,25 @@ def _repartition(qs, champ, libelles=None):
         cle = row[champ]
         out.append({"cle": cle, "libelle": (libelles or {}).get(cle, cle), "count": row["count"]})
     return out
+
+
+class PublicStatsView(APIView):
+    """
+    Chiffres-clés PUBLICS pour la page d'accueil (aucune donnée sensible).
+    Nombres réels du registre national — accessibles sans authentification.
+    """
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(responses={200: dict})
+    def get(self, request):
+        return Response({
+            "vehicules": Vehicule.objects.count(),
+            "immatriculations": Immatriculation.objects.count(),
+            "certificats_actifs": Certificat.objects.filter(statut=StatutCertificat.ACTIF).count(),
+            "controles_total": ScanLog.objects.count(),
+            "regions": 9,  # nombre de régions administratives de Guinée-Bissau
+        })
 
 
 class DashboardStatsView(APIView):
