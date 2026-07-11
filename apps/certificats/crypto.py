@@ -61,22 +61,29 @@ def generer_paire_cles(*, force: bool = False) -> tuple[str, str]:
 
 
 def charger_cle_privee():
+    # Priorité à la clé fournie en base64 (variable d'environnement, prod/Railway).
+    b64 = getattr(settings, "SNICV_PRIVATE_KEY_B64", "")
+    if b64:
+        return serialization.load_pem_private_key(base64.b64decode(b64), password=None)
     chemin = settings.SNICV_PRIVATE_KEY_PATH
     if not os.path.exists(chemin):
         raise ImproperlyConfigured(
-            "Clé privée SNICV introuvable. Exécutez : "
-            "python manage.py generer_cles_snicv"
+            "Clé privée SNICV introuvable. En local : python manage.py generer_cles_snicv. "
+            "En production : définissez la variable SNICV_PRIVATE_KEY_B64."
         )
     with open(chemin, "rb") as f:
         return serialization.load_pem_private_key(f.read(), password=None)
 
 
 def charger_cle_publique():
+    b64 = getattr(settings, "SNICV_PUBLIC_KEY_B64", "")
+    if b64:
+        return serialization.load_pem_public_key(base64.b64decode(b64))
     chemin = settings.SNICV_PUBLIC_KEY_PATH
     if not os.path.exists(chemin):
         raise ImproperlyConfigured(
-            "Clé publique SNICV introuvable. Exécutez : "
-            "python manage.py generer_cles_snicv"
+            "Clé publique SNICV introuvable. En local : python manage.py generer_cles_snicv. "
+            "En production : définissez la variable SNICV_PUBLIC_KEY_B64."
         )
     with open(chemin, "rb") as f:
         return serialization.load_pem_public_key(f.read())

@@ -31,6 +31,19 @@ SECRET_KEY = env("SECRET_KEY", default="dev-insecure-secret-key-change-me")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
+# ── Déploiement Railway ──
+# Railway fournit RAILWAY_PUBLIC_DOMAIN / RAILWAY_PRIVATE_DOMAIN. On autorise
+# aussi *.railway.app et *.railway.internal (health checks, domaine interne).
+RAILWAY_PUBLIC_DOMAIN = env("RAILWAY_PUBLIC_DOMAIN", default="")
+RAILWAY_PRIVATE_DOMAIN = env("RAILWAY_PRIVATE_DOMAIN", default="")
+CSRF_TRUSTED_ORIGINS = ["https://*.railway.app"]
+ALLOWED_HOSTS += [".railway.app", ".railway.internal"]
+for _domaine in (RAILWAY_PUBLIC_DOMAIN, RAILWAY_PRIVATE_DOMAIN):
+    if _domaine:
+        ALLOWED_HOSTS.append(_domaine)
+if RAILWAY_PUBLIC_DOMAIN:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RAILWAY_PUBLIC_DOMAIN}")
+
 # ── Applications ──
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -61,6 +74,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # sert les fichiers statiques en prod
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -129,6 +143,12 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# WhiteNoise : compression + service des statiques directement par l'app (prod).
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ── Django REST Framework ──
@@ -195,6 +215,10 @@ SNICV_PRIVATE_KEY_PATH = env(
     "SNICV_PRIVATE_KEY_PATH", default=str(BASE_DIR / "keys" / "snicv_private.pem"))
 SNICV_PUBLIC_KEY_PATH = env(
     "SNICV_PUBLIC_KEY_PATH", default=str(BASE_DIR / "keys" / "snicv_public.pem"))
+# Alternative sans fichier (recommandé en prod / Railway) : clés PEM en base64.
+# Prioritaires sur les chemins de fichiers ci-dessus si définies.
+SNICV_PRIVATE_KEY_B64 = env("SNICV_PRIVATE_KEY_B64", default="")
+SNICV_PUBLIC_KEY_B64 = env("SNICV_PUBLIC_KEY_B64", default="")
 # URL de base encodée dans le QR (vers l'endpoint de vérification, étape 7).
 SNICV_VERIFY_BASE_URL = env("SNICV_VERIFY_BASE_URL", default="http://localhost:8000/api/v1")
 # Durée de validité du certificat (renouvellement en étape 8).

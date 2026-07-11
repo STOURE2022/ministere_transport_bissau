@@ -10,6 +10,10 @@ django-environ>=0.11
 # Base de données PostgreSQL (psycopg 3). SQLite est utilisé en dev si DATABASE_URL n'est pas défini.
 psycopg[binary]>=3.2
 
+# Déploiement production (Railway)
+gunicorn>=23.0          # serveur WSGI
+whitenoise>=6.7         # service des fichiers statiques
+
 # Sécurité / certificat (utilisés dès l'étape 6 — installés dès maintenant)
 cryptography>=43.0        # signature RSA du certificat
 qrcode[pil]>=7.4          # génération du QR code
