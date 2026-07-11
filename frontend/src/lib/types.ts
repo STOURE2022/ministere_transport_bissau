@@ -9,7 +9,8 @@ export const ROLE_LABEL: Record<Role, string> = {
 
 /** Page d'accueil selon le rôle (après connexion). */
 export function accueilPourRole(role: Role): string {
-  if (role === "AGENT" || role === "ADMIN") return "/agent";
+  if (role === "ADMIN") return "/pilotage";
+  if (role === "AGENT") return "/agent";
   if (role === "FORCE_ORDRE") return "/controle";
   return "/";
 }
@@ -108,6 +109,43 @@ export interface Paginated<T> {
   next: string | null;
   previous: string | null;
   results: T[];
+}
+
+/* ── Tableau de bord national (pilotage) ── */
+export interface StatStatut {
+  statut: string;
+  libelle: string;
+  count: number;
+}
+export interface StatResultat {
+  resultat: string;
+  libelle: string;
+  count: number;
+}
+export interface StatCle {
+  cle: string;
+  libelle: string;
+  count: number;
+}
+export interface StatMois {
+  mois: string;
+  label: string;
+  count: number;
+}
+export interface DashboardStats {
+  vehicules: number;
+  immatriculations: number;
+  certificats_actifs: number;
+  certificats_total: number;
+  signalements_actifs: number;
+  controles_total: number;
+  controles_aujourdhui: number;
+  taux_fraude: number;
+  dossiers_par_statut: StatStatut[];
+  scans_par_resultat: StatResultat[];
+  repartition_type: StatCle[];
+  repartition_energie: StatCle[];
+  certificats_par_mois: StatMois[];
 }
 
 /* ── Étape 4 : décisions agent ── */

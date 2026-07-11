@@ -10,6 +10,7 @@ from drf_spectacular.views import (
 )
 
 api_v1 = [
+    path("", include("apps.core.urls")),
     path("auth/", include("apps.accounts.urls")),
     path("", include("apps.dossiers.urls")),
     path("", include("apps.verifications.urls")),

@@ -10,6 +10,7 @@ import NouveauDossier from "@/pages/NouveauDossier";
 import DossierDetail from "@/pages/DossierDetail";
 import AgentDashboard from "@/pages/AgentDashboard";
 import AgentDossier from "@/pages/AgentDossier";
+import PilotageDashboard from "@/pages/PilotageDashboard";
 import ControleForceOrdre from "@/pages/ControleForceOrdre";
 import VerifyPublic from "@/pages/VerifyPublic";
 
@@ -84,6 +85,18 @@ export default function App() {
             <Protected>
               <RequireRole roles={["USAGER"]}>
                 <DossierDetail />
+              </RequireRole>
+            </Protected>
+          }
+        />
+
+        {/* Pilotage national (agent / admin) */}
+        <Route
+          path="/pilotage"
+          element={
+            <Protected>
+              <RequireRole roles={["AGENT", "ADMIN"]}>
+                <PilotageDashboard />
               </RequireRole>
             </Protected>
           }

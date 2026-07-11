@@ -11,7 +11,13 @@ interface NavLink {
 }
 
 function liensPourRole(role: string): NavLink[] {
-  if (role === "AGENT" || role === "ADMIN") {
+  if (role === "ADMIN") {
+    return [
+      { to: "/pilotage", label: "Pilotage" },
+      { to: "/agent", label: "File de validation" },
+    ];
+  }
+  if (role === "AGENT") {
     return [{ to: "/agent", label: "File de validation" }];
   }
   if (role === "FORCE_ORDRE") {
