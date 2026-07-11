@@ -26,6 +26,7 @@ import { Layout } from "@/components/Layout";
 import { Stepper } from "@/components/Stepper";
 import { StatutBadge } from "@/components/StatutBadge";
 import { PlaqueImmatriculation } from "@/components/PlaqueImmatriculation";
+import { CertificatPremium } from "@/components/CertificatPremium";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -120,7 +121,7 @@ export default function DossierDetail() {
 
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight tnum">{dossier.numero_dossier}</h1>
+          <h1 className="font-serif text-2xl font-bold tracking-tight tnum">{dossier.numero_dossier}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {dossier.vehicule.marque} {dossier.vehicule.modele} · {dossier.vehicule.annee}
           </p>
@@ -131,6 +132,13 @@ export default function DossierDetail() {
       <div className="mb-5">
         <Stepper statut={dossier.statut} />
       </div>
+
+      {certificat && (
+        <div className="mb-5">
+          <div className="eyebrow mb-2">Certificat délivré</div>
+          <CertificatPremium certificat={certificat} />
+        </div>
+      )}
 
       {dossier.statut === "REJETE" && dossier.motif_rejet && (
         <div className="mb-5 flex gap-3 rounded-xl border border-[#F1CFCF] bg-[#FBE7E7] p-4">
@@ -224,8 +232,8 @@ export default function DossierDetail() {
 
         {/* Panneau latéral : certificat + véhicule + vérification */}
         <div className="space-y-5">
-          {(immat || certificat) && (
-            <CarteCertificatUsager immat={immat} certificat={certificat} />
+          {immat && !certificat && (
+            <CarteCertificatUsager immat={immat} certificat={null} />
           )}
 
           <Card>

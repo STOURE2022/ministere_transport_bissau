@@ -36,6 +36,7 @@ import { Layout } from "@/components/Layout";
 import { Stepper } from "@/components/Stepper";
 import { StatutBadge } from "@/components/StatutBadge";
 import { PlaqueImmatriculation } from "@/components/PlaqueImmatriculation";
+import { CertificatPremium } from "@/components/CertificatPremium";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +55,7 @@ export default function AgentDossier() {
   const [immat, setImmat] = useState<Immatriculation | null>(null);
   const [certificat, setCertificat] = useState<Certificat | null>(null);
   const [chargement, setChargement] = useState(true);
+  const [busyRevoke, setBusyRevoke] = useState(false);
 
   const recharger = useCallback(async () => {
     if (!id) return;
@@ -97,6 +99,19 @@ export default function AgentDossier() {
   useEffect(() => {
     recharger().finally(() => setChargement(false));
   }, [recharger]);
+
+  async function revoquer(motif: string) {
+    if (!certificat) return;
+    setBusyRevoke(true);
+    try {
+      await api.post(`/certificats/${certificat.id}/revoquer/`, { motif });
+      await recharger();
+    } catch {
+      /* l'erreur reste silencieuse ici ; le statut ne change pas */
+    } finally {
+      setBusyRevoke(false);
+    }
+  }
 
   if (chargement) {
     return (
@@ -146,6 +161,18 @@ export default function AgentDossier() {
             <p className="font-semibold text-[#9a2f2f]">Dossier rejeté</p>
             <p className="mt-0.5 text-[13px] text-[#9a2f2f]">{dossier.motif_rejet}</p>
           </div>
+        </div>
+      )}
+
+      {certificat && (
+        <div className="mb-5">
+          <div className="eyebrow mb-2">Certificat délivré</div>
+          <CertificatPremium
+            certificat={certificat}
+            revocable={user?.role === "ADMIN" && certificat.statut !== "REVOQUE"}
+            onRevoquer={revoquer}
+            busyRevoke={busyRevoke}
+          />
         </div>
       )}
 
@@ -621,22 +648,20 @@ function PanneauAction({
     );
   }
 
-  // ── Étapes 6/7 : certificat émis ──
+  // ── Étapes 6/7 : certificat émis (la carte complète est affichée au-dessus) ──
   if (certificat) {
     return (
-      <CarteCertificat
-        certificat={certificat}
-        immat={immat}
-        estAdmin={estAdmin}
-        busy={busy}
-        onRevoquer={(m) =>
-          agir("revoquer", () =>
-            api.post(`/certificats/${certificat.id}/revoquer/`, { motif: m })
-          )
-        }
-        erreur={erreur}
-        succes={succes}
-      />
+      <Card>
+        <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
+          <span className="grid size-12 place-items-center rounded-full bg-[#E4F3EC] text-success">
+            <ShieldCheck className="size-6" />
+          </span>
+          <p className="text-sm font-semibold">Cycle terminé</p>
+          <p className="text-[13px] text-muted-foreground">
+            Le certificat est délivré et vérifiable par QR. Voir le détail ci-dessus.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
