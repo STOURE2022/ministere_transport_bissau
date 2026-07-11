@@ -197,6 +197,9 @@ SPECTACULAR_SETTINGS = {
 
 # ── CORS ──
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+# Autorise automatiquement tout front hébergé sur Railway (*.railway.app),
+# sans avoir à ré-énumérer l'origine à chaque déploiement.
+CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://.*\.railway\.app$"]
 
 # ── Paramètres OTP / notifications ──
 OTP_BACKEND = env("OTP_BACKEND")          # console | mock
