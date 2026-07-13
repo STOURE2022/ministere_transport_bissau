@@ -102,6 +102,14 @@ class CertificatPdfView(APIView):
         certificat = get_object_or_404(Certificat, pk=uuid)
         if not _accessible(request.user, certificat):
             raise NotFound()
+        # L'usager doit avoir réglé la taxe pour télécharger son certificat
+        # (le personnel conserve l'accès). Couvre aussi les certificats hérités.
+        if request.user.role not in STAFF_ROLES:
+            from apps.paiements.services import paiement_bloque_certificat
+            if paiement_bloque_certificat(certificat.dossier):
+                return Response(
+                    {"detail": "Réglez la taxe d'immatriculation pour télécharger votre certificat."},
+                    status=status.HTTP_402_PAYMENT_REQUIRED)
         if not certificat.pdf_fichier:
             raise NotFound("PDF indisponible.")
         return FileResponse(certificat.pdf_fichier.open("rb"),

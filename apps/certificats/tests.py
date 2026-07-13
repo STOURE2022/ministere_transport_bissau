@@ -46,6 +46,12 @@ class CertificatBase(APITestCase):
 
     def setUp(self):
         crypto.generer_paire_cles()  # paire de clés éphémère (générée une fois, réutilisée)
+        # Ces tests portent sur la mécanique du certificat, indépendamment du
+        # paiement : on désactive l'exigence de règlement de la taxe.
+        from apps.paiements.models import ConfigurationPaiement
+        cfg = ConfigurationPaiement.actuelle()
+        cfg.paiement_requis = False
+        cfg.save(update_fields=["paiement_requis"])
         self.usager = creer_user("usager@ex.gw")
         self.agent = creer_user("agent@snicv.gw", role="AGENT", tel="+245955000003")
         self.admin = creer_user("admin@snicv.gw", role="ADMIN", tel="+245955000004")

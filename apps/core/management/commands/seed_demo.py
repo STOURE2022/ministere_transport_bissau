@@ -205,8 +205,10 @@ class Command(BaseCommand):
         if cible == "IMMATRICULE":
             return veh
 
-        # CERTIFIE et CERTIFIE_VOLE : émission du certificat.
-        emettre_certificat(dossier, agent)
+        # CERTIFIE et CERTIFIE_VOLE : le règlement de la taxe délivre
+        # automatiquement le certificat (le paiement est requis).
+        from apps.paiements.services import payer
+        payer(dossier, operateur_code="ORANGE", numero="95 500 01 03", user=dossier.usager)
         dossier.refresh_from_db()
         veh.refresh_from_db()
         return veh

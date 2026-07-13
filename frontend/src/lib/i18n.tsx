@@ -365,6 +365,10 @@ const PT: Record<string, string> = {
     "Documento assinado digitalmente pelo SNICV (RSA-2048). Qualquer alteração invalida a assinatura.",
   "Télécharger le PDF officiel": "Descarregar o PDF oficial",
   "PDF momentanément indisponible.": "PDF temporariamente indisponível.",
+  "Réglez la taxe d'immatriculation pour télécharger votre certificat.":
+    "Pague a taxa de matrícula para descarregar o seu certificado.",
+  "Le certificat est délivré automatiquement dès que l'usager règle la taxe d'immatriculation.":
+    "O certificado é emitido automaticamente assim que o utente pagar a taxa de matrícula.",
   "Jeton copié": "Código copiado",
   "Jeton hors-ligne": "Código offline",
   "Révocation (admin)": "Revogação (admin)",

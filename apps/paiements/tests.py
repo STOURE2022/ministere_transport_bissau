@@ -172,3 +172,27 @@ class GateCertificatTests(PaiementBase):
         dossier.refresh_from_db()
         self.assertEqual(dossier.statut, StatutDossier.CERTIFIE)
         self.assertTrue(Certificat.objects.filter(dossier=dossier).exists())
+
+    def test_certificat_non_telechargeable_sans_paiement(self):
+        """L'usager ne peut pas télécharger son certificat tant que la taxe n'est pas réglée."""
+        from apps.certificats.services import emettre_certificat
+        cfg = ConfigurationPaiement.actuelle()
+        cfg.paiement_requis = False  # on émet d'abord un certificat non réglé (cas hérité)
+        cfg.save()
+        dossier = self._dossier(statut=StatutDossier.IMMATRICULE)
+        ok, _, cert = emettre_certificat(dossier, self.agent)
+        self.assertTrue(ok)
+
+        cfg.paiement_requis = True  # exigence réactivée
+        cfg.save()
+        pdf_url = reverse("v1:certificats:pdf", args=[cert.id])
+        # Usager non payé : bloqué (402).
+        self.client.force_authenticate(self.usager)
+        self.assertEqual(self.client.get(pdf_url).status_code, status.HTTP_402_PAYMENT_REQUIRED)
+        # Le personnel garde l'accès.
+        self.client.force_authenticate(self.agent)
+        self.assertEqual(self.client.get(pdf_url).status_code, status.HTTP_200_OK)
+        # Après paiement, l'usager peut télécharger.
+        payer(dossier, operateur_code="ORANGE", numero="1", user=self.usager)
+        self.client.force_authenticate(self.usager)
+        self.assertEqual(self.client.get(pdf_url).status_code, status.HTTP_200_OK)

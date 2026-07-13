@@ -655,8 +655,13 @@ function CarteCertificatUsager({
     setErreur(null);
     try {
       await telechargerCertificatPdf(certificat.id);
-    } catch {
-      setErreur(t("PDF momentanément indisponible."));
+    } catch (err) {
+      const code = (err as { response?: { status?: number } })?.response?.status;
+      setErreur(
+        code === 402
+          ? t("Réglez la taxe d'immatriculation pour télécharger votre certificat.")
+          : t("PDF momentanément indisponible."),
+      );
     } finally {
       setTel(false);
     }

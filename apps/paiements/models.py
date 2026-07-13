@@ -20,8 +20,9 @@ class ConfigurationPaiement(TimeStampedModel):
     montant_timbre = models.PositiveIntegerField("Timbre fiscal", default=2000)
     frais_service = models.PositiveIntegerField("Frais de service", default=500)
     paiement_requis = models.BooleanField(
-        "Paiement requis avant le certificat", default=False,
-        help_text="Si activé, le certificat ne peut être émis qu'après règlement de la taxe.",
+        "Paiement requis avant le certificat", default=True,
+        help_text="Si activé, le certificat n'est délivré (et téléchargeable) "
+                  "qu'après règlement de la taxe.",
     )
 
     class Meta:

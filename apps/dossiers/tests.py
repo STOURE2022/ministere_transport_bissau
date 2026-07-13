@@ -302,7 +302,7 @@ class SoumissionTests(DossierBase):
         aujourdhui = datetime.date.today()
         self._ajouter_doc(dossier, TypeDocument.ASSURANCE,
                           date_debut=aujourdhui - datetime.timedelta(days=400),
-                          date_fin=aujourdhui - datetime.timedelta(days=1))  # expirée
+                          date_fin=aujourdhui - datetime.timedelta(days=30))  # expirée (marge > fuseau)
         self._ajouter_doc(dossier, TypeDocument.FACTURE, date_debut=aujourdhui)
         self._ajouter_doc(dossier, TypeDocument.CONTROLE_TECHNIQUE,
                           date_debut=aujourdhui, date_fin=aujourdhui + datetime.timedelta(days=180))

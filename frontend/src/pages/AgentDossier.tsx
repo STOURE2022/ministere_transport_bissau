@@ -635,8 +635,11 @@ function PanneauAction({
               </p>
             </div>
           )}
-          <p className="mb-4 text-sm text-muted-foreground">
+          <p className="mb-3 text-sm text-muted-foreground">
             {t("Générez le certificat signé (RSA-2048) et son QR de vérification.")}
+          </p>
+          <p className="mb-4 rounded-lg bg-muted/50 px-3 py-2 text-[12.5px] text-muted-foreground">
+            {t("Le certificat est délivré automatiquement dès que l'usager règle la taxe d'immatriculation.")}
           </p>
           <Button
             className="w-full"

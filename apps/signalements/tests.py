@@ -44,6 +44,11 @@ class SignalementBase(APITestCase):
     def setUp(self):
         crypto.generer_paire_cles()
         cache.clear()
+        # Émission de certificat de test sans passer par le paiement de la taxe.
+        from apps.paiements.models import ConfigurationPaiement
+        cfg = ConfigurationPaiement.actuelle()
+        cfg.paiement_requis = False
+        cfg.save(update_fields=["paiement_requis"])
         self.usager = creer_user("u@ex.gw")
         self.agent = creer_user("agent@snicv.gw", role="AGENT", tel="+245955000003")
         self.admin = creer_user("admin@snicv.gw", role="ADMIN", tel="+245955000004")
