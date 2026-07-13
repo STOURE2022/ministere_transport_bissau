@@ -103,6 +103,20 @@ class EmissionTests(CertificatBase):
         dossier.refresh_from_db()
         self.assertEqual(dossier.statut, StatutDossier.CERTIFIE)
 
+    def test_emission_bloquee_si_une_piece_refusee(self):
+        """Anti-fraude : un dossier avec une pièce refusée ne peut pas être certifié."""
+        from apps.dossiers.models import StatutVerifDocument
+        dossier = self._dossier_immatricule()
+        doc = dossier.documents.first()
+        doc.statut_verif = StatutVerifDocument.NON_CONFORME
+        doc.motif_verif = "Falsifiée"
+        doc.save(update_fields=["statut_verif", "motif_verif"])
+        self.client.force_authenticate(self.agent)
+        resp = self.client.post(reverse("v1:certificats:emettre", args=[dossier.id]))
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        dossier.refresh_from_db()
+        self.assertEqual(dossier.statut, StatutDossier.IMMATRICULE)
+
     def test_signature_valide_sur_le_snapshot(self):
         dossier = self._dossier_immatricule()
         self.client.force_authenticate(self.agent)

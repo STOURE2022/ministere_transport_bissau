@@ -28,7 +28,7 @@ from .serializers import (
     DossierListSerializer,
     VerifierDocumentSerializer,
 )
-from .services import archiver_dossier, generer_numero_dossier, soumettre_dossier
+from .services import archiver_dossier, generer_numero_dossier, rouvrir_dossier, soumettre_dossier
 
 
 class DossierViewSet(viewsets.ModelViewSet):
@@ -121,6 +121,23 @@ class DossierViewSet(viewsets.ModelViewSet):
         data = DossierDetailSerializer(dossier).data
         data["verification"] = VerificationAutoSerializer(verif).data
         return Response(data)
+
+    @extend_schema(
+        request=None,
+        responses={200: OpenApiResponse(description="Dossier rouvert pour correction"),
+                   400: OpenApiResponse(description="Le dossier n'est pas rejeté")},
+    )
+    @action(detail=True, methods=["post"])
+    def rouvrir(self, request, pk=None):
+        """Rouvre un dossier rejeté (REJETE → BROUILLON) pour que l'usager le corrige."""
+        dossier = self.get_object()
+        if request.user.role != "USAGER" or dossier.usager_id != request.user.id:
+            raise PermissionDenied("Seul l'usager propriétaire peut corriger son dossier.")
+        ok, message = rouvrir_dossier(dossier, request.user, request=request)
+        if not ok:
+            return Response({"detail": message}, status=status.HTTP_400_BAD_REQUEST)
+        dossier.refresh_from_db()
+        return Response(DossierDetailSerializer(dossier).data)
 
 
 class HistoriqueView(APIView):

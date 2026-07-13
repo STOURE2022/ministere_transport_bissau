@@ -130,6 +130,34 @@ class PieceRefuseeTests(ValidationBase):
         dossier.refresh_from_db()
         self.assertEqual(dossier.statut, StatutDossier.VALIDE)
 
+    def test_usager_corrige_le_dossier_rejete(self):
+        """Un dossier rejeté est rouvert (REJETE→BROUILLON) et ses pièces réinitialisées."""
+        dossier = self._dossier(statut=StatutDossier.REJETE)
+        dossier.motif_rejet = "Assurance illisible"
+        dossier.save(update_fields=["motif_rejet"])
+        piece = self._piece(dossier, StatutVerifDocument.NON_CONFORME)
+        # L'agent ne peut pas rouvrir : réservé au propriétaire.
+        self.client.force_authenticate(self.agent)
+        self.assertEqual(
+            self.client.post(reverse("v1:dossiers:dossier-rouvrir", args=[dossier.id])).status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+        # L'usager corrige son dossier.
+        self.client.force_authenticate(self.usager)
+        resp = self.client.post(reverse("v1:dossiers:dossier-rouvrir", args=[dossier.id]))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        dossier.refresh_from_db()
+        piece.refresh_from_db()
+        self.assertEqual(dossier.statut, StatutDossier.BROUILLON)
+        self.assertEqual(dossier.motif_rejet, "")
+        self.assertEqual(piece.statut_verif, StatutVerifDocument.EN_ATTENTE)
+
+    def test_rouvrir_refuse_si_non_rejete(self):
+        dossier = self._dossier(statut=StatutDossier.EN_VALIDATION)
+        self.client.force_authenticate(self.usager)
+        resp = self.client.post(reverse("v1:dossiers:dossier-rouvrir", args=[dossier.id]))
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 class PermissionsValidationTests(ValidationBase):
     def test_usager_ne_peut_pas_valider(self):

@@ -646,9 +646,14 @@ function PanneauAction({
           <p className="mb-4 rounded-lg bg-muted/50 px-3 py-2 text-[12.5px] text-muted-foreground">
             {t("Le certificat est délivré automatiquement dès que l'usager règle la taxe d'immatriculation.")}
           </p>
+          {dossier.documents.some((d) => d.statut_verif === "NON_CONFORME") && (
+            <p className="mb-4 rounded-lg bg-[#FBE7E7] px-3 py-2 text-[12.5px] text-[#9a2f2f]">
+              {t("Une pièce a été refusée : le certificat est bloqué pour ce dossier.")}
+            </p>
+          )}
           <Button
             className="w-full"
-            disabled={busy !== null}
+            disabled={busy !== null || dossier.documents.some((d) => d.statut_verif === "NON_CONFORME")}
             onClick={() =>
               agir("cert", () => api.post(`/dossiers/${id}/certificat/`, {}))
             }

@@ -15,6 +15,7 @@ import {
   Gauge,
   History,
   Loader2,
+  Pencil,
   ReceiptText,
   Send,
   ShieldCheck,
@@ -70,6 +71,7 @@ export default function DossierDetail() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [problemes, setProblemes] = useState<string[]>([]);
   const [soumission, setSoumission] = useState(false);
+  const [reouverture, setReouverture] = useState(false);
 
   const charger = useCallback(async () => {
     if (!id) return;
@@ -113,6 +115,20 @@ export default function DossierDetail() {
       else setErreur(messageErreur(err));
     } finally {
       setSoumission(false);
+    }
+  }
+
+  async function corriger() {
+    if (!id) return;
+    setErreur(null);
+    setReouverture(true);
+    try {
+      await api.post(`/dossiers/${id}/rouvrir/`);
+      await charger();
+    } catch (err) {
+      setErreur(messageErreur(err));
+    } finally {
+      setReouverture(false);
     }
   }
 
@@ -214,12 +230,25 @@ export default function DossierDetail() {
       )}
 
       {/* ── Rejet ── */}
-      {dossier.statut === "REJETE" && dossier.motif_rejet && (
-        <div className="mt-5 flex gap-3 rounded-xl border border-[#F1CFCF] bg-[#FBE7E7] p-4">
-          <AlertTriangle className="size-5 shrink-0 text-destructive" />
-          <div>
-            <p className="font-semibold text-[#9a2f2f]">{t("Dossier rejeté")}</p>
-            <p className="mt-0.5 text-[13px] text-[#9a2f2f]">{dossier.motif_rejet}</p>
+      {dossier.statut === "REJETE" && (
+        <div className="mt-5 rounded-xl border border-[#F1CFCF] bg-[#FBE7E7] p-4">
+          <div className="flex gap-3">
+            <AlertTriangle className="size-5 shrink-0 text-destructive" />
+            <div className="flex-1">
+              <p className="font-semibold text-[#9a2f2f]">{t("Dossier rejeté")}</p>
+              {dossier.motif_rejet && (
+                <p className="mt-0.5 text-[13px] text-[#9a2f2f]">{dossier.motif_rejet}</p>
+              )}
+              <p className="mt-2 text-[13px] text-[#9a2f2f]">
+                {t("Corrigez les pièces concernées et soumettez à nouveau ce dossier — inutile d'en créer un autre.")}
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <Button onClick={corriger} disabled={reouverture}>
+              {reouverture ? <Loader2 className="size-4 animate-spin" /> : <Pencil className="size-4" />}
+              {t("Corriger le dossier")}
+            </Button>
           </div>
         </div>
       )}

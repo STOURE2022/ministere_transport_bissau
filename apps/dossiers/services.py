@@ -94,6 +94,32 @@ def soumettre_dossier(dossier: Dossier) -> tuple[bool, list[str]]:
     return True, []
 
 
+@transaction.atomic
+def rouvrir_dossier(dossier: Dossier, user, *, request=None) -> tuple[bool, str]:
+    """
+    Rouvre un dossier REJETE pour correction par l'usager (retour en BROUILLON).
+
+    Réinitialise la vérification des pièces (statut_verif → EN_ATTENTE) afin que,
+    à la re-soumission, le processus normal recommence intégralement (nouvelle
+    vérification auto puis nouvelle revue agent). L'usager corrige LE MÊME dossier
+    au lieu d'en créer un nouveau.
+    """
+    from apps.core.services import log_action
+    from .models import StatutVerifDocument
+
+    if dossier.statut != StatutDossier.REJETE:
+        return False, "Seul un dossier rejeté peut être corrigé."
+    dossier.statut = StatutDossier.BROUILLON
+    dossier.motif_rejet = ""
+    dossier.save(update_fields=["statut", "motif_rejet", "date_maj"])
+    dossier.documents.update(
+        statut_verif=StatutVerifDocument.EN_ATTENTE, motif_verif="", verifie_par=None,
+    )
+    log_action("DOSSIER_ROUVERT", user=user, objet=dossier, request=request,
+               numero=dossier.numero_dossier)
+    return True, "Dossier rouvert pour correction."
+
+
 # Statuts depuis lesquels un dossier peut être archivé (fin de cycle de vie).
 STATUTS_ARCHIVABLES = {StatutDossier.CERTIFIE, StatutDossier.IMMATRICULE, StatutDossier.REJETE}
 

@@ -58,6 +58,11 @@ def emettre_certificat(dossier: Dossier, agent, *, request=None):
     if Certificat.objects.filter(dossier=dossier).exists():
         return False, "Un certificat existe déjà pour ce dossier.", None
 
+    # Anti-fraude : aucune certification si une pièce du dossier a été refusée.
+    from apps.dossiers.models import StatutVerifDocument
+    if dossier.documents.filter(statut_verif=StatutVerifDocument.NON_CONFORME).exists():
+        return False, "Une pièce du dossier a été refusée : le certificat ne peut pas être émis.", None
+
     # Le paiement de la taxe peut être exigé (configurable par l'admin).
     from apps.paiements.services import paiement_bloque_certificat
     if paiement_bloque_certificat(dossier):

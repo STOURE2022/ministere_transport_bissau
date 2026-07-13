@@ -464,6 +464,12 @@ const PT: Record<string, string> = {
   "Envoi impossible. Vérifiez vos informations.": "Envio impossível. Verifique os seus dados.",
   "Une pièce a été refusée : le dossier ne peut pas être validé. Rejetez-le ou demandez un complément.":
     "Um documento foi recusado: o processo não pode ser validado. Recuse-o ou peça um complemento.",
+  // Correction d'un dossier rejeté + blocage certificat
+  "Corriger le dossier": "Corrigir o processo",
+  "Corrigez les pièces concernées et soumettez à nouveau ce dossier — inutile d'en créer un autre.":
+    "Corrija os documentos em causa e submeta novamente este processo — não é preciso criar outro.",
+  "Une pièce a été refusée : le certificat est bloqué pour ce dossier.":
+    "Um documento foi recusado: o certificado está bloqueado para este processo.",
   "Jeton copié": "Código copiado",
   "Jeton hors-ligne": "Código offline",
   "Révocation (admin)": "Revogação (admin)",
