@@ -70,6 +70,7 @@ LOCAL_APPS = [
     "apps.certificats",
     "apps.signalements",
     "apps.notifications",
+    "apps.paiements",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -213,6 +214,10 @@ OTP_CODE_LENGTH = env("OTP_CODE_LENGTH")
 IMMATRICULATION_SUFFIXE = env("IMMATRICULATION_SUFFIXE", default="BS")
 # Suffixe dédié aux plaques moto/tricycle (distinct de celui des voitures).
 IMMATRICULATION_SUFFIXE_MOTO = env("IMMATRICULATION_SUFFIXE_MOTO", default="SB")
+
+# Passerelle mobile money (abstraite) — mockée par défaut, vraie passerelle
+# (Orange Money / MTN MoMo) branchée plus tard sans toucher au code métier.
+PAIEMENT_BACKEND = env("PAIEMENT_BACKEND", default="apps.paiements.passerelle.PasserelleMock")
 
 # ── Certificat QR (signature RSA) ──
 # Répertoire des clés SNICV. La clé PRIVÉE ne doit JAMAIS être committée

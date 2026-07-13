@@ -55,10 +55,14 @@ function liensPourRole(role: string): NavLink[] {
     return [
       { to: "/pilotage", label: "Pilotage" },
       { to: "/agent", label: "File de validation" },
+      { to: "/paiements", label: "Paiements" },
     ];
   }
   if (role === "AGENT") {
-    return [{ to: "/agent", label: "File de validation" }];
+    return [
+      { to: "/agent", label: "File de validation" },
+      { to: "/paiements", label: "Paiements" },
+    ];
   }
   if (role === "FORCE_ORDRE") {
     return [{ to: "/controle", label: "Contrôle" }];

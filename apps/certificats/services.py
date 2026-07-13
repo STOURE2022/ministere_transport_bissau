@@ -58,6 +58,11 @@ def emettre_certificat(dossier: Dossier, agent, *, request=None):
     if Certificat.objects.filter(dossier=dossier).exists():
         return False, "Un certificat existe déjà pour ce dossier.", None
 
+    # Le paiement de la taxe peut être exigé (configurable par l'admin).
+    from apps.paiements.services import paiement_bloque_certificat
+    if paiement_bloque_certificat(dossier):
+        return False, "La taxe d'immatriculation doit être réglée avant l'émission du certificat.", None
+
     now = timezone.now()
     snapshot = _construire_snapshot(dossier, now)
 

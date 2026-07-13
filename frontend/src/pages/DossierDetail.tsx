@@ -4,8 +4,10 @@ import { QRCodeSVG } from "qrcode.react";
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   Car,
   CheckCircle2,
+  CreditCard,
   Download,
   Eye,
   FileCheck2,
@@ -30,6 +32,7 @@ import {
   type DocumentItem,
   type DossierDetail as Dossier,
   type Immatriculation,
+  type MontantPaiement,
   type Verification,
 } from "@/lib/types";
 import { Layout } from "@/components/Layout";
@@ -276,6 +279,10 @@ export default function DossierDetail() {
         <div className="space-y-5">
           {immat && !certificat && <CarteCertificatUsager immat={immat} certificat={null} />}
 
+          {["IMMATRICULE", "CERTIFIE", "ARCHIVE"].includes(dossier.statut) && (
+            <CartePaiement dossierId={dossier.id} />
+          )}
+
           <Panel icon={<Car className="size-[17px]" />} titre={t("Véhicule")}>
             <dl className="grid gap-0">
               <Spec label="VIN" valeur={dossier.vehicule.vin} mono />
@@ -518,6 +525,61 @@ function DocRow({
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── Carte paiement de la taxe (accès à la page de règlement) ── */
+function CartePaiement({ dossierId }: { dossierId: string }) {
+  const { t } = useLang();
+  const [montant, setMontant] = useState<MontantPaiement | null>(null);
+
+  useEffect(() => {
+    api
+      .get<MontantPaiement>(`/dossiers/${dossierId}/paiement/montant/`)
+      .then((r) => setMontant(r.data))
+      .catch(() => setMontant(null));
+  }, [dossierId]);
+
+  if (!montant) return null;
+  const paye = montant.deja_paye;
+
+  return (
+    <Panel
+      icon={<CreditCard className={`size-[17px] ${paye ? "text-success" : ""}`} />}
+      titre={t("Taxe d'immatriculation")}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.1em] text-faint">
+            {paye ? t("Réglée") : t("Montant à payer")}
+          </div>
+          <div className="font-serif text-2xl font-bold text-navy tabular-nums">
+            {montant.total.toLocaleString("fr-FR")} {montant.devise}
+          </div>
+        </div>
+        <span
+          className="rounded-full px-3 py-1.5 text-[11px] font-bold"
+          style={paye ? { background: "#e7f2ec", color: "#166b44" } : { background: "#f7efd9", color: "#8a6410" }}
+        >
+          {paye ? t("Payée") : t("En attente")}
+        </span>
+      </div>
+      <Link
+        to={`/dossiers/${dossierId}/paiement`}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-[10px] py-2.5 text-[13.5px] font-semibold text-white transition hover:brightness-110"
+        style={{ background: paye ? "#1e8e5a" : "var(--color-navy)" }}
+      >
+        {paye ? (
+          <>
+            <ReceiptText className="size-4" /> {t("Voir le reçu")}
+          </>
+        ) : (
+          <>
+            <CreditCard className="size-4" /> {t("Payer la taxe")} <ArrowRight className="size-4" />
+          </>
+        )}
+      </Link>
+    </Panel>
   );
 }
 

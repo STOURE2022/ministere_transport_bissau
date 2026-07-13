@@ -11,6 +11,9 @@ import NouveauDossier from "@/pages/NouveauDossier";
 import DossierDetail from "@/pages/DossierDetail";
 import Notifications from "@/pages/Notifications";
 import Historique from "@/pages/Historique";
+import Paiement from "@/pages/Paiement";
+import Paiements from "@/pages/Paiements";
+import PaiementsConfig from "@/pages/PaiementsConfig";
 import AgentDashboard from "@/pages/AgentDashboard";
 import AgentDossier from "@/pages/AgentDossier";
 import PilotageDashboard from "@/pages/PilotageDashboard";
@@ -121,6 +124,38 @@ export default function App() {
             <Protected>
               <RequireRole roles={["USAGER"]}>
                 <Historique />
+              </RequireRole>
+            </Protected>
+          }
+        />
+        <Route
+          path="/dossiers/:id/paiement"
+          element={
+            <Protected>
+              <RequireRole roles={["USAGER"]}>
+                <Paiement />
+              </RequireRole>
+            </Protected>
+          }
+        />
+
+        {/* Paiements de la taxe (agent / admin) + configuration (admin) */}
+        <Route
+          path="/paiements"
+          element={
+            <Protected>
+              <RequireRole roles={["AGENT", "ADMIN"]}>
+                <Paiements />
+              </RequireRole>
+            </Protected>
+          }
+        />
+        <Route
+          path="/paiements/configuration"
+          element={
+            <Protected>
+              <RequireRole roles={["ADMIN"]}>
+                <PaiementsConfig />
               </RequireRole>
             </Protected>
           }

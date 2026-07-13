@@ -22,6 +22,7 @@ from apps.dossiers.models import Document, Dossier, TypeDocument, Vehicule
 from apps.dossiers.services import generer_numero_dossier, soumettre_dossier
 from apps.immatriculations.services import attribuer_immatriculation
 from apps.notifications.services import generer_relances
+from apps.paiements.services import payer
 from apps.signalements.models import TypeSignalement
 from apps.signalements.services import signaler_vehicule
 from apps.validations.services import valider_dossier
@@ -97,7 +98,20 @@ class Command(BaseCommand):
         self._rapprocher_echeances(usagers)
         generer_relances()
 
+        # Paiement de démo (visible par l'agent / l'admin).
+        self._payer_demo(usagers)
+
         self._resume(comptes, cert_plaque, vole_plaque, moto_plaque)
+
+    def _payer_demo(self, usagers):
+        """Règle la taxe d'un dossier certifié pour peupler la liste des paiements."""
+        dossier = (
+            Dossier.objects.filter(usager__in=usagers, statut="CERTIFIE")
+            .order_by("date_creation")
+            .first()
+        )
+        if dossier and not dossier.paiements.exists():
+            payer(dossier, operateur_code="ORANGE", numero="95 500 01 03", user=dossier.usager)
 
     def _rapprocher_echeances(self, usagers):
         """Rapproche l'assurance/le contrôle technique d'un dossier certifié

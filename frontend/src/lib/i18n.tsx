@@ -568,4 +568,92 @@ const PT: Record<string, string> = {
     "Câmara indisponível. Autorize o acesso ou introduza o QR manualmente.",
   "Fermer": "Fechar",
   "ou collez le lien lu par un autre lecteur": "ou cole a ligação lida por outro leitor",
+
+  /* ── Paiement de la taxe (mobile money) ── */
+  "Paiements": "Pagamentos",
+  "Retour au dossier": "Voltar ao processo",
+  "Paiement de la taxe d'immatriculation": "Pagamento da taxa de matrícula",
+  "Dossier": "Processo",
+  "Régler par mobile money": "Pagar por mobile money",
+  "Total à payer": "Total a pagar",
+  "Taxe réglée.": "Taxa paga.",
+  "Votre reçu officiel est disponible ci-contre. Il débloque l'émission du certificat.":
+    "O seu recibo oficial está disponível ao lado. Desbloqueia a emissão do certificado.",
+  "Opérateur mobile money": "Operador mobile money",
+  "Numéro mobile money": "Número mobile money",
+  "Paiement sécurisé. Vous recevrez une demande de confirmation (USSD) sur votre téléphone pour valider.":
+    "Pagamento seguro. Receberá um pedido de confirmação (USSD) no seu telemóvel para validar.",
+  "CHIFFRÉ TLS": "CIFRADO TLS",
+  "SNICV · TRÉSOR PUBLIC": "SNICV · TESOURO PÚBLICO",
+  "REÇU OFFICIEL": "RECIBO OFICIAL",
+  "Payer": "Pagar",
+  "Paiement impossible. Réessayez.": "Pagamento impossível. Tente novamente.",
+  "Reçu de paiement": "Recibo de pagamento",
+  "PAYÉ": "PAGO",
+  "Montant réglé": "Montante pago",
+  "Reçu N°": "Recibo N.º",
+  "Opérateur": "Operador",
+  "Réf. transaction": "Ref. transação",
+  "Date": "Data",
+  "Vérifier l'authenticité du reçu": "Verificar a autenticidade do recibo",
+  "Paiement confirmé.": "Pagamento confirmado.",
+  "Ce reçu débloque l'émission du certificat d'immatriculation.":
+    "Este recibo desbloqueia a emissão do certificado de matrícula.",
+  "Télécharger le reçu (PDF)": "Descarregar o recibo (PDF)",
+  "Reçu momentanément indisponible.": "Recibo temporariamente indisponível.",
+  "Votre reçu apparaîtra ici": "O seu recibo aparecerá aqui",
+  "Une fois le paiement confirmé, un reçu officiel signé (référence + QR de vérification) est généré instantanément.":
+    "Após a confirmação do pagamento, é gerado instantaneamente um recibo oficial assinado (referência + QR de verificação).",
+  "Montant": "Montante",
+  "Reçu": "Recibo",
+
+  /* ── Journal des paiements (agent / admin) ── */
+  "Paiements de la taxe": "Pagamentos da taxa",
+  "Suivez tous les règlements de la taxe d'immatriculation réglés par mobile money.":
+    "Acompanhe todos os pagamentos da taxa de matrícula efetuados por mobile money.",
+  "Configuration": "Configuração",
+  "Paiements réglés": "Pagamentos efetuados",
+  "Total encaissé": "Total recebido",
+  "En attente": "Pendente",
+  "Journal des paiements": "Registo de pagamentos",
+  "Reçu, dossier, nom…": "Recibo, processo, nome…",
+  "Tous": "Todos",
+  "Réglés": "Pagos",
+  "Aucun paiement": "Nenhum pagamento",
+  "Aucun règlement ne correspond à ce filtre.": "Nenhum pagamento corresponde a este filtro.",
+  "Payé": "Pago",
+  "Échoué": "Falhado",
+
+  /* ── Configuration des paiements (admin) ── */
+  "Configuration des paiements": "Configuração dos pagamentos",
+  "Montants, devise et opérateurs de la taxe d'immatriculation — rien n'est codé en dur, tout se règle ici.":
+    "Montantes, moeda e operadores da taxa de matrícula — nada está fixo no código, tudo se define aqui.",
+  "Barème & devise": "Tabela & moeda",
+  "Taxe d'immatriculation": "Taxa de matrícula",
+  "Timbre fiscal": "Selo fiscal",
+  "Frais de service": "Taxa de serviço",
+  "Devise": "Moeda",
+  "Exiger le paiement avant le certificat": "Exigir o pagamento antes do certificado",
+  "Si activé, l'agent ne peut émettre le certificat qu'après règlement de la taxe.":
+    "Se ativado, o agente só pode emitir o certificado após o pagamento da taxa.",
+  "Barème enregistré": "Tabela guardada",
+  "Enregistrer le barème": "Guardar a tabela",
+  "Opérateurs mobile money": "Operadores mobile money",
+  "Ajouter": "Adicionar",
+  "Nom (ex. Wave)": "Nome (ex. Wave)",
+  "Code (ex. WAVE)": "Código (ex. WAVE)",
+  "Code USSD (ex. #144#)": "Código USSD (ex. #144#)",
+  "Créer l'opérateur": "Criar o operador",
+  "Aucun opérateur configuré.": "Nenhum operador configurado.",
+  "Inactif": "Inativo",
+  "Supprimer": "Eliminar",
+  "Seuls les opérateurs actifs sont proposés à l'usager au moment du paiement.":
+    "Apenas os operadores ativos são propostos ao utente no momento do pagamento.",
+
+  /* ── Carte paiement (détail dossier usager) ── */
+  "Réglée": "Paga",
+  "Montant à payer": "Montante a pagar",
+  "Payée": "Paga",
+  "Voir le reçu": "Ver o recibo",
+  "Payer la taxe": "Pagar a taxa",
 };

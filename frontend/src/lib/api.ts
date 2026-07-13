@@ -95,6 +95,27 @@ export async function ouvrirDocument(id: string): Promise<void> {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
+/** Télécharge le reçu de paiement (PDF) via l'endpoint authentifié. */
+export async function telechargerRecuPdf(paiementId: string, reference: string): Promise<void> {
+  const { data } = await api.get(`/paiements/${paiementId}/recu/`, { responseType: "blob" });
+  const url = URL.createObjectURL(data as Blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `recu-${reference}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Ouvre le reçu de paiement (PDF) dans un nouvel onglet (endpoint authentifié, inline). */
+export async function ouvrirRecuPdf(paiementId: string): Promise<void> {
+  const { data } = await api.get(`/paiements/${paiementId}/recu/`, { responseType: "blob" });
+  const url = URL.createObjectURL(data as Blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 /** Ouvre le PDF du dossier de vie d'un dossier (endpoint authentifié, inline). */
 export async function ouvrirCycleViePdf(dossierId: string): Promise<void> {
   const { data } = await api.get(`/dossiers/${dossierId}/cycle-de-vie/pdf/`, { responseType: "blob" });

@@ -341,6 +341,71 @@ export interface DossierDeVie {
   evenements: EvenementVie[];
 }
 
+/* ── Paiement de la taxe d'immatriculation (mobile money) ── */
+export type StatutPaiement = "EN_ATTENTE" | "PAYE" | "ECHOUE";
+
+export interface LignePaiement {
+  libelle: string;
+  montant: number;
+}
+
+export interface OperateurPaiement {
+  id: string;
+  nom: string;
+  code: string;
+  code_ussd: string;
+  couleur: string;
+  actif: boolean;
+  ordre: number;
+}
+
+/** Réponse de l'endpoint « montant » : ce que la page de paiement affiche. */
+export interface MontantPaiement {
+  devise: string;
+  lignes: LignePaiement[];
+  total: number;
+  operateurs: OperateurPaiement[];
+  deja_paye: boolean;
+}
+
+export interface Paiement {
+  id: string;
+  reference: string;
+  devise: string;
+  montant_total: number;
+  detail: LignePaiement[];
+  operateur: string;
+  code_ussd: string;
+  numero_telephone: string;
+  reference_transaction: string;
+  statut: StatutPaiement;
+  statut_libelle: string;
+  paye_le: string | null;
+  date_creation: string;
+  numero_dossier: string;
+  immatriculation: string | null;
+  usager_nom: string;
+  a_recu: boolean;
+}
+
+/** Configuration facturable, éditable depuis le tableau de bord admin. */
+export interface ConfigurationPaiement {
+  devise: string;
+  montant_taxe: number;
+  montant_timbre: number;
+  frais_service: number;
+  paiement_requis: boolean;
+  total: number;
+  lignes: LignePaiement[];
+}
+
+export interface PaiementStats {
+  nombre_payes: number;
+  montant_total: number;
+  en_attente: number;
+  devise: string;
+}
+
 export const ENERGIES = ["ESSENCE", "DIESEL", "ELECTRIQUE", "HYBRIDE", "GPL"] as const;
 export const TYPES_VEHICULE = ["VP", "UTILITAIRE", "MOTO", "POIDS_LOURD", "BUS"] as const;
 
