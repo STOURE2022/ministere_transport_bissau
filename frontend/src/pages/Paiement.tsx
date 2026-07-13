@@ -150,12 +150,20 @@ export default function Paiement() {
           </div>
 
           {paye ? (
-            <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-[#bfe0cd] bg-[#e7f2ec] px-4 py-3.5 text-[13px] text-[#166b44]">
-              <CheckCircle2 className="mt-px size-5 shrink-0" />
-              <span>
-                <b className="font-semibold">{t("Taxe réglée.")}</b>{" "}
-                {t("Votre reçu officiel est disponible ci-contre. Il débloque l'émission du certificat.")}
-              </span>
+            <div className="mt-5 space-y-3">
+              <div className="flex items-start gap-2.5 rounded-xl border border-[#bfe0cd] bg-[#e7f2ec] px-4 py-3.5 text-[13px] text-[#166b44]">
+                <CheckCircle2 className="mt-px size-5 shrink-0" />
+                <span>
+                  <b className="font-semibold">{t("Taxe réglée.")}</b>{" "}
+                  {t("Votre reçu est disponible ci-contre et votre certificat d'immatriculation a été délivré.")}
+                </span>
+              </div>
+              <Link
+                to={`/dossiers/${dossier.id}`}
+                className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-navy py-2.5 text-[13.5px] font-semibold text-white transition hover:brightness-110"
+              >
+                <ShieldCheck className="size-4" /> {t("Voir mon certificat")}
+              </Link>
             </div>
           ) : (
             <>

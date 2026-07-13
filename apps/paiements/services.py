@@ -106,7 +106,23 @@ def payer(dossier, *, operateur_code: str, numero: str, user=None, request=None)
     except Exception:  # noqa: BLE001 — la notification ne doit jamais bloquer le paiement
         pass
 
+    # Délivrance automatique du certificat : régler la taxe d'un dossier immatriculé
+    # émet aussitôt le certificat (le paiement débloque et déclenche la délivrance).
+    _delivrer_certificat_apres_paiement(dossier, user, request)
+
     return True, "Paiement confirmé.", paiement
+
+
+def _delivrer_certificat_apres_paiement(dossier, user, request):
+    """Émet le certificat si le dossier est prêt. N'interrompt jamais le paiement."""
+    try:
+        from apps.dossiers.models import StatutDossier
+        if dossier.statut != StatutDossier.IMMATRICULE:
+            return
+        from apps.certificats.services import emettre_certificat
+        emettre_certificat(dossier, user, request=request)
+    except Exception:  # noqa: BLE001 — l'émission ne doit jamais faire échouer le paiement
+        pass
 
 
 def _generer_recu(paiement):

@@ -143,20 +143,32 @@ class PaiementFlowTests(PaiementBase):
         ok, _, _ = payer(dossier, operateur_code="INEXISTANT", numero="1", user=self.usager)
         self.assertFalse(ok)
 
+    def test_paiement_delivre_le_certificat(self):
+        """Régler la taxe d'un dossier immatriculé émet aussitôt le certificat."""
+        from apps.certificats.models import Certificat
+        dossier = self._dossier(statut=StatutDossier.IMMATRICULE)
+        payer(dossier, operateur_code="ORANGE", numero="1", user=self.usager)
+        dossier.refresh_from_db()
+        self.assertEqual(dossier.statut, StatutDossier.CERTIFIE)
+        self.assertTrue(Certificat.objects.filter(dossier=dossier).exists())
+
 
 class GateCertificatTests(PaiementBase):
-    def test_paiement_requis_bloque_puis_debloque_le_certificat(self):
+    def test_paiement_requis_bloque_puis_delivre_le_certificat(self):
+        from apps.certificats.models import Certificat
         from apps.certificats.services import emettre_certificat
         cfg = ConfigurationPaiement.actuelle()
         cfg.paiement_requis = True
         cfg.save()
 
         dossier = self._dossier(statut=StatutDossier.IMMATRICULE)
+        # Tant que la taxe n'est pas réglée, l'agent est bloqué.
         ok, message, _ = emettre_certificat(dossier, self.agent)
         self.assertFalse(ok)
         self.assertIn("taxe", message.lower())
 
+        # Le paiement débloque ET délivre automatiquement le certificat.
         payer(dossier, operateur_code="ORANGE", numero="1", user=self.usager)
-        ok, _, cert = emettre_certificat(dossier, self.agent)
-        self.assertTrue(ok)
-        self.assertIsNotNone(cert)
+        dossier.refresh_from_db()
+        self.assertEqual(dossier.statut, StatutDossier.CERTIFIE)
+        self.assertTrue(Certificat.objects.filter(dossier=dossier).exists())

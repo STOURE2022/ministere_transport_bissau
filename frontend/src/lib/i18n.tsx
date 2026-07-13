@@ -579,6 +579,9 @@ const PT: Record<string, string> = {
   "Taxe réglée.": "Taxa paga.",
   "Votre reçu officiel est disponible ci-contre. Il débloque l'émission du certificat.":
     "O seu recibo oficial está disponível ao lado. Desbloqueia a emissão do certificado.",
+  "Votre reçu est disponible ci-contre et votre certificat d'immatriculation a été délivré.":
+    "O seu recibo está disponível ao lado e o seu certificado de matrícula foi emitido.",
+  "Voir mon certificat": "Ver o meu certificado",
   "Opérateur mobile money": "Operador mobile money",
   "Numéro mobile money": "Número mobile money",
   "Paiement sécurisé. Vous recevrez une demande de confirmation (USSD) sur votre téléphone pour valider.":
