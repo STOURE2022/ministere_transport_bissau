@@ -121,3 +121,19 @@ class RejetHabilitationSerializer(serializers.Serializer):
         if not value.strip():
             raise serializers.ValidationError("Le motif du refus est obligatoire.")
         return value.strip()
+
+
+class ResoumettreHabilitationSerializer(serializers.Serializer):
+    """Nouvelle demande d'un compte de contrôle dont la précédente a été refusée."""
+
+    corps = serializers.SlugRelatedField(slug_field="code", queryset=CorpsControle.objects.all())
+    matricule = serializers.CharField(max_length=40)
+    grade = serializers.CharField(max_length=60, required=False, allow_blank=True, default="")
+    unite = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
+    region = serializers.CharField(max_length=60, required=False, allow_blank=True, default="")
+    justificatif = serializers.FileField()
+
+    def validate_corps(self, value):
+        if not value.actif:
+            raise serializers.ValidationError("Ce corps de contrôle n'est plus proposé.")
+        return value

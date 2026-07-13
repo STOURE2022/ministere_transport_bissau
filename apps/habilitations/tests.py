@@ -176,6 +176,32 @@ class FileValidationTests(HabilitationBase):
         self.assertEqual(resp.data["validees"], 1)
 
 
+class ResoumissionTests(HabilitationBase):
+    def _payload(self):
+        return {"corps": "GARDE_NATIONALE", "matricule": "GN-99", "justificatif": _justif()}
+
+    def test_resoumission_apres_refus_repasse_en_attente(self):
+        user, dem = self._demande(statut=StatutHabilitation.REJETE)
+        self.client.force_authenticate(user)
+        resp = self.client.post(reverse("v1:habilitations:resoumettre"), self._payload(), format="multipart")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["user"]["habilitation"]["statut"], "EN_ATTENTE")
+        user.refresh_from_db()
+        self.assertEqual(user.habilitation.statut, StatutHabilitation.EN_ATTENTE)
+        self.assertEqual(user.habilitation.corps.code, "GARDE_NATIONALE")
+
+    def test_resoumission_refusee_si_demande_non_rejetee(self):
+        user, _ = self._demande(statut=StatutHabilitation.EN_ATTENTE)
+        self.client.force_authenticate(user)
+        resp = self.client.post(reverse("v1:habilitations:resoumettre"), self._payload(), format="multipart")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_resoumission_reservee_aux_forces_de_l_ordre(self):
+        self.client.force_authenticate(self.usager)
+        resp = self.client.post(reverse("v1:habilitations:resoumettre"), self._payload(), format="multipart")
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+
 class GatingAccesTests(HabilitationBase):
     """Un agent de contrôle non validé ne peut pas utiliser les fonctions de contrôle."""
 

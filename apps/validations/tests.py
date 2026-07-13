@@ -1,12 +1,26 @@
 """Tests de l'étape 4 : validation, rejet, demande de complément, historique."""
+import shutil
+import tempfile
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.dossiers.models import Dossier, StatutDossier, Vehicule
+from apps.dossiers.models import (
+    Document,
+    Dossier,
+    StatutDossier,
+    StatutVerifDocument,
+    TypeDocument,
+    Vehicule,
+)
 
 from .models import ActionValidation, ValidationAgent
+
+MEDIA_TMP = tempfile.mkdtemp()
 
 
 def creer_user(email, role="USAGER", tel="+24570000001"):
@@ -79,6 +93,42 @@ class DecisionTests(ValidationBase):
         self.client.force_authenticate(self.agent)
         resp = self.client.post(reverse("v1:validations:valider", args=[dossier.id]), {})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+@override_settings(MEDIA_ROOT=MEDIA_TMP)
+class PieceRefuseeTests(ValidationBase):
+    """Un dossier dont une pièce a été refusée ne peut pas être validé."""
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA_TMP, ignore_errors=True)
+        super().tearDownClass()
+
+    def _piece(self, dossier, statut_verif):
+        return Document.objects.create(
+            dossier=dossier, type_document=TypeDocument.ASSURANCE,
+            fichier=SimpleUploadedFile("p.pdf", b"%PDF-1.4"),
+            statut_verif=statut_verif,
+            motif_verif="Illisible" if statut_verif == StatutVerifDocument.NON_CONFORME else "",
+        )
+
+    def test_validation_bloquee_si_une_piece_refusee(self):
+        dossier = self._dossier()
+        self._piece(dossier, StatutVerifDocument.NON_CONFORME)
+        self.client.force_authenticate(self.agent)
+        resp = self.client.post(reverse("v1:validations:valider", args=[dossier.id]), {})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        dossier.refresh_from_db()
+        self.assertEqual(dossier.statut, StatutDossier.EN_VALIDATION)
+
+    def test_validation_ok_si_pieces_conformes(self):
+        dossier = self._dossier()
+        self._piece(dossier, StatutVerifDocument.CONFORME)
+        self.client.force_authenticate(self.agent)
+        resp = self.client.post(reverse("v1:validations:valider", args=[dossier.id]), {})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        dossier.refresh_from_db()
+        self.assertEqual(dossier.statut, StatutDossier.VALIDE)
 
 
 class PermissionsValidationTests(ValidationBase):

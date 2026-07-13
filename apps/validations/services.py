@@ -14,7 +14,7 @@ from __future__ import annotations
 from django.db import transaction
 
 from apps.core.services import log_action
-from apps.dossiers.models import Dossier, StatutDossier
+from apps.dossiers.models import Dossier, StatutDossier, StatutVerifDocument
 from apps.notifications.models import NiveauNotification
 from apps.notifications.services import notifier
 
@@ -39,6 +39,16 @@ def _enregistrer(dossier, agent, action, commentaire, request):
 def valider_dossier(dossier: Dossier, agent, commentaire: str = "", *, request=None):
     if dossier.statut != STATUT_TRAITABLE:
         return False, "Seul un dossier en attente de validation peut être validé.", None
+    # Un dossier dont une pièce a été refusée ne peut pas être validé.
+    pieces_refusees = dossier.documents.filter(statut_verif=StatutVerifDocument.NON_CONFORME)
+    if pieces_refusees.exists():
+        libelles = ", ".join(d.get_type_document_display() for d in pieces_refusees)
+        return (
+            False,
+            f"Une pièce a été refusée ({libelles}) : le dossier ne peut pas être validé. "
+            "Rejetez-le ou demandez un complément.",
+            None,
+        )
     dossier.statut = StatutDossier.VALIDE
     dossier.motif_rejet = ""
     decision = _enregistrer(dossier, agent, ActionValidation.VALIDE, commentaire, request)

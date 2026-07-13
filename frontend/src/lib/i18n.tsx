@@ -457,6 +457,13 @@ const PT: Record<string, string> = {
   // Statuts d'habilitation (renvoyés par l'API)
   "Validée": "Validada",
   "Rejetée": "Recusada",
+  // Re-soumission après refus + garde-fou pièce refusée
+  "Refaire ma demande": "Fazer novo pedido",
+  "Nouvelle demande": "Novo pedido",
+  "Soumettre à nouveau": "Submeter novamente",
+  "Envoi impossible. Vérifiez vos informations.": "Envio impossível. Verifique os seus dados.",
+  "Une pièce a été refusée : le dossier ne peut pas être validé. Rejetez-le ou demandez un complément.":
+    "Um documento foi recusado: o processo não pode ser validado. Recuse-o ou peça um complemento.",
   "Jeton copié": "Código copiado",
   "Jeton hors-ligne": "Código offline",
   "Révocation (admin)": "Revogação (admin)",

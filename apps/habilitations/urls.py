@@ -12,6 +12,7 @@ from .views import (
     HabilitationStatsView,
     HabilitationValiderView,
     InscriptionControleView,
+    ResoumettreHabilitationView,
 )
 
 app_name = "habilitations"
@@ -20,6 +21,7 @@ urlpatterns = [
     # Public
     path("corps/", CorpsActifsView.as_view(), name="corps-actifs"),
     path("inscription-controle/", InscriptionControleView.as_view(), name="inscription-controle"),
+    path("habilitations/resoumettre/", ResoumettreHabilitationView.as_view(), name="resoumettre"),
     # File de validation (staff)
     path("habilitations/", HabilitationListView.as_view(), name="liste"),
     path("habilitations/stats/", HabilitationStatsView.as_view(), name="stats"),

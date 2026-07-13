@@ -484,6 +484,11 @@ function PanneauAction({
 
           {mode === "valider" && (
             <div className="space-y-3">
+              {dossier.documents.some((d) => d.statut_verif === "NON_CONFORME") && (
+                <p className="rounded-lg bg-[#FBE7E7] px-3 py-2 text-[12.5px] text-[#9a2f2f]">
+                  {t("Une pièce a été refusée : le dossier ne peut pas être validé. Rejetez-le ou demandez un complément.")}
+                </p>
+              )}
               <div>
                 <Label htmlFor="c-val">{t("Commentaire (facultatif)")}</Label>
                 <textarea
@@ -498,7 +503,7 @@ function PanneauAction({
               <Button
                 variant="success"
                 className="w-full"
-                disabled={busy !== null}
+                disabled={busy !== null || dossier.documents.some((d) => d.statut_verif === "NON_CONFORME")}
                 onClick={() =>
                   agir("valider", () =>
                     api.post(`/dossiers/${id}/valider/`, { commentaire })

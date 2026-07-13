@@ -1,11 +1,12 @@
 """Endpoints des habilitations : inscription, file de validation, gestion des corps."""
 import mimetypes
 
+from django.contrib.auth import get_user_model
 from django.db.models import Count
 from django.http import FileResponse, Http404
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -21,13 +22,17 @@ from .serializers import (
     DemandeHabilitationSerializer,
     InscriptionControleSerializer,
     RejetHabilitationSerializer,
+    ResoumettreHabilitationSerializer,
 )
 from .services import (
     corps_actifs,
+    creer_demande_habilitation,
     habilitation_stats,
     rejeter_habilitation,
     valider_habilitation,
 )
+
+User = get_user_model()
 
 
 # ── Public : corps proposés + inscription ──
@@ -68,6 +73,41 @@ class InscriptionControleView(APIView):
                 "user": UserSerializer(user).data,
             },
             status=status.HTTP_201_CREATED,
+        )
+
+
+class ResoumettreHabilitationView(APIView):
+    """Un compte de contrôle refusé dépose une nouvelle demande (repasse en attente)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=ResoumettreHabilitationSerializer,
+        responses={200: OpenApiResponse(description="Demande resoumise, de nouveau en attente.")},
+    )
+    def post(self, request):
+        user = request.user
+        if user.role != "FORCE_ORDRE":
+            return Response({"detail": "Réservé aux comptes de corps de contrôle."},
+                            status=status.HTTP_403_FORBIDDEN)
+        demande = getattr(user, "habilitation", None)
+        if demande is None or demande.statut != StatutHabilitation.REJETE:
+            return Response({"detail": "Aucune demande refusée à resoumettre."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        serializer = ResoumettreHabilitationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        d = serializer.validated_data
+        creer_demande_habilitation(
+            user, d["corps"], matricule=d["matricule"], justificatif=d["justificatif"],
+            grade=d.get("grade", ""), unite=d.get("unite", ""), region=d.get("region", ""),
+        )
+        # Recharge le compte pour renvoyer l'habilitation à jour (relation 1-1 recréée).
+        fresh = User.objects.select_related("habilitation__corps").get(pk=user.pk)
+        log_action("HABILITATION_RESOUMISE", user=user, objet=user, request=request,
+                   reference=fresh.habilitation.reference)
+        return Response(
+            {"message": "Demande resoumise.", "user": UserSerializer(fresh).data},
+            status=status.HTTP_200_OK,
         )
 
 

@@ -250,6 +250,20 @@ class DocumentVerifierView(APIView):
 
         log_action("PIECE_VERIFIEE", user=request.user, objet=document.dossier,
                    request=request, type_document=document.type_document, statut=statut)
+
+        # L'usager est prévenu qu'une pièce précise de son dossier a été refusée.
+        if statut == StatutVerifDocument.NON_CONFORME:
+            from apps.notifications.models import NiveauNotification
+            from apps.notifications.services import notifier
+            dossier = document.dossier
+            notifier(
+                dossier.usager, NiveauNotification.ACTION,
+                titre="Pièce refusée",
+                message=f"La pièce « {document.get_type_document_display()} » de votre dossier "
+                        f"{dossier.numero_dossier} a été refusée. Motif : {motif}",
+                categorie="Action requise", lien=f"/dossiers/{dossier.id}",
+                cta_label="Voir le dossier",
+            )
         return Response(DocumentSerializer(document).data)
 
 
