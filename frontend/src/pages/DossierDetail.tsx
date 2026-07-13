@@ -10,10 +10,14 @@ import {
   Eye,
   FileCheck2,
   Files,
+  Gauge,
   Loader2,
+  ReceiptText,
   Send,
   ShieldCheck,
   Upload,
+  UploadCloud,
+  type LucideIcon,
 } from "lucide-react";
 import { api, messageErreur, ouvrirDocument, telechargerCertificatPdf } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
@@ -35,6 +39,20 @@ import { SignalerVehiculeCard } from "@/components/SignalerVehiculeCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+/** Couleur d'accent + icône par type de pièce (identité visuelle de la section). */
+const DOC_META: Record<string, { accent: string; tint: string; Icon: LucideIcon }> = {
+  ASSURANCE: { accent: "#1e5aa8", tint: "#eaf1fb", Icon: ShieldCheck },
+  CONTROLE_TECHNIQUE: { accent: "#b8891f", tint: "#f7efd9", Icon: Gauge },
+  FACTURE: { accent: "#1e8e5a", tint: "#e7f2ec", Icon: ReceiptText },
+};
+const DOC_META_DEFAUT = { accent: "#1e5aa8", tint: "#eaf1fb", Icon: Files };
+
+function formatTaille(octets: number): string {
+  if (octets < 1024) return `${octets} o`;
+  if (octets < 1024 * 1024) return `${(octets / 1024).toFixed(0)} Ko`;
+  return `${(octets / (1024 * 1024)).toFixed(1)} Mo`;
+}
 
 export default function DossierDetail() {
   const { t } = useLang();
@@ -205,6 +223,7 @@ export default function DossierDetail() {
                   estBrouillon={estBrouillon}
                   dossierId={dossier.id}
                   type={doc.value}
+                  meta={DOC_META[doc.value] ?? DOC_META_DEFAUT}
                   onDone={charger}
                 />
               ))}
@@ -369,7 +388,7 @@ function JaugeRisque({ score, libelle }: { score: number; libelle: string }) {
   );
 }
 
-/* ── Pièce justificative (avec téléversement en brouillon) ── */
+/* ── Pièce justificative (carte colorée par type, téléversement en brouillon) ── */
 function DocRow({
   label,
   present,
@@ -378,6 +397,7 @@ function DocRow({
   estBrouillon,
   dossierId,
   type,
+  meta,
   onDone,
 }: {
   label: string;
@@ -387,9 +407,11 @@ function DocRow({
   estBrouillon: boolean;
   dossierId: string;
   type: string;
+  meta: { accent: string; tint: string; Icon: LucideIcon };
   onDone: () => Promise<void>;
 }) {
   const { t } = useLang();
+  const { accent, tint, Icon } = meta;
   const [ouvre, setOuvre] = useState(false);
   const [errVoir, setErrVoir] = useState<string | null>(null);
   const sousTitre =
@@ -414,41 +436,75 @@ function DocRow({
     }
   }
 
+  // Bandeau latéral coloré : vert si déposé, accent du type sinon.
+  const stripe = present ? "#1e8e5a" : accent;
+
   return (
-    <div className="rounded-xl border border-border p-3.5">
-      <div className="flex items-center gap-3">
-        {present ? (
-          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#e7f2ec] text-success">
-            <CheckCircle2 className="size-[18px]" />
-          </span>
-        ) : (
-          <span className="size-7 shrink-0 rounded-full border-2 border-input" />
-        )}
-        <div className="min-w-0">
-          <div className="text-sm font-semibold">{label}</div>
-          {sousTitre && <div className="text-[12px] text-faint">{sousTitre}</div>}
+    <div
+      className="overflow-hidden rounded-2xl border bg-card shadow-[0_1px_0_rgba(13,39,72,.03),0_14px_30px_-26px_rgba(13,39,72,.5)]"
+      style={{ borderColor: present ? "#cfe6d9" : "var(--color-border)" }}
+    >
+      <div className="flex items-stretch">
+        <span className="w-1.5 shrink-0" style={{ background: stripe }} aria-hidden />
+        <div className="min-w-0 flex-1 p-3.5">
+          <div className="flex items-center gap-3">
+            <span
+              className="grid size-10 shrink-0 place-items-center rounded-xl"
+              style={{
+                background: present ? "#e7f2ec" : tint,
+                color: present ? "#1e8e5a" : accent,
+              }}
+            >
+              {present ? <CheckCircle2 className="size-[22px]" /> : <Icon className="size-[21px]" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-foreground">{label}</div>
+              {sousTitre ? (
+                <div className="text-[12px] text-faint">{sousTitre}</div>
+              ) : !present ? (
+                <div className="text-[12px]" style={{ color: accent }}>
+                  {t("Pièce obligatoire")}
+                </div>
+              ) : null}
+            </div>
+            {present && document && (
+              <button
+                type="button"
+                onClick={voir}
+                disabled={ouvre}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-semibold transition hover:bg-muted disabled:opacity-60"
+                style={{ borderColor: "#bfe0cd", color: "#166b44" }}
+              >
+                {ouvre ? <Loader2 className="size-3.5 animate-spin" /> : <Eye className="size-3.5" />}
+                {t("Voir")}
+              </button>
+            )}
+            {present ? (
+              <span className="rounded-full bg-[#e7f2ec] px-2.5 py-1 text-[11px] font-bold text-success">
+                {t("Déposé")}
+              </span>
+            ) : (
+              <span
+                className="rounded-full px-2.5 py-1 text-[11px] font-bold"
+                style={{ background: tint, color: accent }}
+              >
+                {t("À fournir")}
+              </span>
+            )}
+          </div>
+          {errVoir && <p className="mt-2 text-[12px] text-destructive">{errVoir}</p>}
+          {!present && estBrouillon && (
+            <UploadRow
+              dossierId={dossierId}
+              type={type}
+              withDates={withDates}
+              accent={accent}
+              tint={tint}
+              onDone={onDone}
+            />
+          )}
         </div>
-        {present && document && (
-          <button
-            type="button"
-            onClick={voir}
-            disabled={ouvre}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-semibold text-navy hover:bg-muted disabled:opacity-60"
-          >
-            {ouvre ? <Loader2 className="size-3.5 animate-spin" /> : <Eye className="size-3.5" />}
-            {t("Voir")}
-          </button>
-        )}
-        {present && !document && (
-          <span className="ml-auto rounded-full bg-[#e7f2ec] px-2.5 py-1 text-[11px] font-bold text-success">
-            {t("Déposé")}
-          </span>
-        )}
       </div>
-      {errVoir && <p className="mt-2 text-[12px] text-destructive">{errVoir}</p>}
-      {!present && estBrouillon && (
-        <UploadRow dossierId={dossierId} type={type} withDates={withDates} onDone={onDone} />
-      )}
     </div>
   );
 }
@@ -521,11 +577,15 @@ function UploadRow({
   dossierId,
   type,
   withDates,
+  accent,
+  tint,
   onDone,
 }: {
   dossierId: string;
   type: string;
   withDates: boolean;
+  accent: string;
+  tint: string;
   onDone: () => Promise<void>;
 }) {
   const { t } = useLang();
@@ -555,13 +615,37 @@ function UploadRow({
   }
 
   return (
-    <div className="mt-3 space-y-3 border-t border-border pt-3">
-      <Input
-        type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
-        onChange={(e) => setFichier(e.target.files?.[0] ?? null)}
-        className="cursor-pointer"
-      />
+    <div className="mt-3.5 space-y-3 border-t border-dashed pt-3.5" style={{ borderColor: `${accent}33` }}>
+      {/* Sélecteur de fichier custom (l'input natif est masqué) */}
+      <label
+        className="group flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed px-4 py-3 transition hover:bg-muted/30"
+        style={{ borderColor: fichier ? accent : "var(--color-input)", background: fichier ? tint : undefined }}
+      >
+        <span
+          className="grid size-9 shrink-0 place-items-center rounded-lg"
+          style={{ background: tint, color: accent }}
+        >
+          {fichier ? <CheckCircle2 className="size-5" /> : <UploadCloud className="size-5" />}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold text-foreground">
+            {fichier ? fichier.name : t("Choisir un fichier")}
+          </span>
+          <span className="block text-[11.5px] text-faint">
+            {fichier ? formatTaille(fichier.size) : t("PDF, JPG ou PNG · 5 Mo max")}
+          </span>
+        </span>
+        <span className="shrink-0 text-[12px] font-bold" style={{ color: accent }}>
+          {fichier ? t("Remplacer") : t("Parcourir")}
+        </span>
+        <input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          className="hidden"
+          onChange={(e) => setFichier(e.target.files?.[0] ?? null)}
+        />
+      </label>
+
       {withDates && (
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -585,10 +669,16 @@ function UploadRow({
         </div>
       )}
       {erreur && <p className="text-[12.5px] text-destructive">{erreur}</p>}
-      <Button size="sm" onClick={envoyer} disabled={!fichier || envoi}>
+      <button
+        type="button"
+        onClick={envoyer}
+        disabled={!fichier || envoi}
+        className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+        style={{ background: accent }}
+      >
         {envoi ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
         {t("Téléverser")}
-      </Button>
+      </button>
     </div>
   );
 }
