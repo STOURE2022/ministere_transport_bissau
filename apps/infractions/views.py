@@ -33,7 +33,10 @@ from .services import (
 
 
 def _est_staff(user) -> bool:
-    return user.role in STAFF_ROLES or user.role == "FORCE_ORDRE"
+    if user.role not in STAFF_ROLES and user.role != "FORCE_ORDRE":
+        return False
+    from apps.habilitations.services import force_ordre_en_attente
+    return not force_ordre_en_attente(user)
 
 
 def _est_proprietaire(user, infraction) -> bool:

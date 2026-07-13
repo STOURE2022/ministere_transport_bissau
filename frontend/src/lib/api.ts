@@ -137,6 +137,14 @@ export async function ouvrirQuittancePdf(infractionId: string): Promise<void> {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
+/** Ouvre la pièce justificative d'une demande d'habilitation (endpoint authentifié, inline). */
+export async function ouvrirJustificatif(demandeId: string): Promise<void> {
+  const { data } = await api.get(`/habilitations/${demandeId}/justificatif/`, { responseType: "blob" });
+  const url = URL.createObjectURL(data as Blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 /** Ouvre le PDF du dossier de vie d'un dossier (endpoint authentifié, inline). */
 export async function ouvrirCycleViePdf(dossierId: string): Promise<void> {
   const { data } = await api.get(`/dossiers/${dossierId}/cycle-de-vie/pdf/`, { responseType: "blob" });

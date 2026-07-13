@@ -104,7 +104,43 @@ class Command(BaseCommand):
         # Procès-verbaux de démo (amende à régler + amende soldée).
         self._verbaliser_demo(usagers, force)
 
+        # Demandes d'habilitation de démo (file de validation des corps de contrôle).
+        self._habiliter_demo(comptes["agent@snicv.gw"])
+
         self._resume(comptes, cert_plaque, vole_plaque, moto_plaque)
+
+    def _habiliter_demo(self, agent):
+        """Crée quelques demandes d'inscription de corps de contrôle (dont une validée)."""
+        from apps.habilitations.models import CorpsControle, StatutHabilitation
+        from apps.habilitations.services import creer_demande_habilitation, valider_habilitation
+
+        # (email, tel, prenom, nom, code_corps, matricule, grade, region, valider)
+        demandes = [
+            ("bacar.sane@controle.gw", "+245955000201", "Bacar", "Sané",
+             "CIRCULATION", "POP-4821", "Sous-officier", "Bissau", False),
+            ("mariama.camara@controle.gw", "+245955000202", "Mariama", "Camará",
+             "GARDE_NATIONALE", "GN-1177", "Adjudant", "Bafatá", False),
+            ("idrissa.fati@controle.gw", "+245955000203", "Idrissa", "Fati",
+             "JUDICIAIRE", "PJ-0930", "Inspecteur", "Gabú", True),
+        ]
+        for email, tel, prenom, nom, code, matricule, grade, region, valider in demandes:
+            if User.objects.filter(email=email).exists():
+                continue
+            corps = CorpsControle.objects.filter(code=code).first()
+            if not corps:
+                continue
+            user = User.objects.create_user(
+                email=email, telephone=tel, nom=nom, prenom=prenom,
+                role="FORCE_ORDRE", is_active=True, is_telephone_verifie=True,
+            )
+            user.set_password(MDP)
+            user.save()
+            demande = creer_demande_habilitation(
+                user, corps, matricule=matricule, justificatif=_pdf("justificatif.pdf"),
+                grade=grade, region=region,
+            )
+            if valider:
+                valider_habilitation(demande, agent)
 
     def _verbaliser_demo(self, usagers, force):
         """Dresse deux PV sur un véhicule immatriculé : un à régler, un soldé."""

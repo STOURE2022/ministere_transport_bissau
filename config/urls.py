@@ -21,6 +21,7 @@ api_v1 = [
     path("", include("apps.notifications.urls")),
     path("", include("apps.paiements.urls")),
     path("", include("apps.infractions.urls")),
+    path("", include("apps.habilitations.urls")),
 ]
 
 urlpatterns = [

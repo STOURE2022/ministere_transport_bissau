@@ -35,9 +35,19 @@ class IsAgentOrAdmin(RolePermission):
 
 
 class IsStaffRole(RolePermission):
-    """Tout profil interne (non-usager)."""
+    """
+    Tout profil interne (non-usager). Un agent de contrôle dont l'habilitation
+    n'est pas encore validée est traité comme non habilité (accès refusé aux
+    fonctions de contrôle tant qu'un agent SNICV n'a pas validé sa demande).
+    """
 
     roles = ("AGENT", "FORCE_ORDRE", "ADMIN")
+
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        from apps.habilitations.services import force_ordre_en_attente
+        return not force_ordre_en_attente(request.user)
 
 
 class PeutDeclarerSignalement(RolePermission):

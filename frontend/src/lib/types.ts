@@ -15,6 +15,17 @@ export function accueilPourRole(role: Role): string {
   return "/";
 }
 
+export type StatutHabilitation = "EN_ATTENTE" | "VALIDE" | "REJETE";
+
+/** État d'habilitation d'un compte force de l'ordre (exposé dans /auth/me). */
+export interface HabilitationEtat {
+  statut: StatutHabilitation;
+  statut_libelle: string;
+  corps: string;
+  reference: string;
+  motif_decision: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -25,6 +36,17 @@ export interface User {
   is_active: boolean;
   is_email_verifie?: boolean;
   is_telephone_verifie?: boolean;
+  habilitation?: HabilitationEtat | null;
+}
+
+/** Vrai si l'agent de contrôle n'est pas encore habilité (demande en attente/refusée). */
+export function habilitationEnAttente(user: User | null | undefined): boolean {
+  return (
+    !!user &&
+    user.role === "FORCE_ORDRE" &&
+    !!user.habilitation &&
+    user.habilitation.statut !== "VALIDE"
+  );
 }
 
 export type StatutDossier =
@@ -469,6 +491,50 @@ export interface InfractionCible {
   modele: string;
   annee: number;
   types: TypeInfraction[];
+}
+
+/* ── Inscription & habilitation des corps de contrôle ── */
+export interface CorpsControle {
+  id: string;
+  nom: string;
+  nom_court: string;
+  code: string;
+  sigle: string;
+  couleur: string;
+  actif: boolean;
+  ordre: number;
+  nb_membres?: number;
+}
+
+export interface DemandeHabilitation {
+  id: string;
+  reference: string;
+  statut: StatutHabilitation;
+  statut_libelle: string;
+  corps: string;
+  corps_nom: string;
+  corps_sigle: string;
+  corps_couleur: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  matricule: string;
+  grade: string;
+  unite: string;
+  region: string;
+  motif_decision: string;
+  decide_par_nom: string | null;
+  decide_le: string | null;
+  a_justificatif: boolean;
+  date_creation: string;
+}
+
+export interface HabilitationStats {
+  en_attente: number;
+  validees: number;
+  rejetees: number;
+  corps_actifs: number;
 }
 
 export const ENERGIES = ["ESSENCE", "DIESEL", "ELECTRIQUE", "HYBRIDE", "GPL"] as const;

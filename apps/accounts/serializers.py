@@ -50,17 +50,32 @@ class LogoutSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     """Profil utilisateur (lecture / mise à jour partielle)."""
 
+    habilitation = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
             "id", "email", "telephone", "nom", "prenom", "role",
             "is_email_verifie", "is_telephone_verifie", "is_active",
-            "date_creation",
+            "date_creation", "habilitation",
         )
         read_only_fields = (
             "id", "email", "role", "is_email_verifie",
-            "is_telephone_verifie", "is_active", "date_creation",
+            "is_telephone_verifie", "is_active", "date_creation", "habilitation",
         )
+
+    def get_habilitation(self, obj):
+        """État d'habilitation d'un compte force de l'ordre (None sinon)."""
+        demande = getattr(obj, "habilitation", None)
+        if demande is None:
+            return None
+        return {
+            "statut": demande.statut,
+            "statut_libelle": demande.get_statut_display(),
+            "corps": demande.corps.nom if demande.corps_id else "",
+            "reference": demande.reference,
+            "motif_decision": demande.motif_decision,
+        }
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
