@@ -264,6 +264,40 @@ export interface ScanLog {
   date_scan: string;
 }
 
+/* ── Notifications & alertes d'échéance ── */
+export type NiveauNotification = "SUCCES" | "INFO" | "ALERTE" | "ACTION" | "NEUTRE";
+
+export interface Notification {
+  id: string;
+  niveau: NiveauNotification;
+  niveau_libelle: string;
+  categorie: string;
+  titre: string;
+  message: string;
+  lien: string;
+  cta_label: string;
+  lu: boolean;
+  date_creation: string;
+}
+
+export interface Echeance {
+  categorie: "ASSURANCE" | "CT" | "CERTIFICAT";
+  label: string;
+  immatriculation: string | null;
+  echeance: string;
+  jours_restants: number;
+  niveau: NiveauNotification;
+  lien: string;
+}
+
+export interface PreferencesNotification {
+  canal_email: boolean;
+  canal_sms: boolean;
+  canal_push: boolean;
+  delais_relance: number[];
+  delais_disponibles: number[];
+}
+
 export const ENERGIES = ["ESSENCE", "DIESEL", "ELECTRIQUE", "HYBRIDE", "GPL"] as const;
 export const TYPES_VEHICULE = ["VP", "UTILITAIRE", "MOTO", "POIDS_LOURD", "BUS"] as const;
 

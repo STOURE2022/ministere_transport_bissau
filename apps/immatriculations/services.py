@@ -14,6 +14,8 @@ from django.db.models import Max
 
 from apps.core.services import log_action
 from apps.dossiers.models import Dossier, StatutDossier, TypeVehicule
+from apps.notifications.models import NiveauNotification
+from apps.notifications.services import notifier
 
 from .models import CategoriePlaque, Immatriculation
 
@@ -75,4 +77,9 @@ def attribuer_immatriculation(dossier: Dossier, agent, *, request=None):
 
     log_action("IMMATRICULATION_ATTRIBUEE", user=agent, objet=dossier, request=request,
                numero=numero, vehicule=str(dossier.vehicule_id))
+    notifier(dossier.usager, NiveauNotification.SUCCES,
+             titre="Immatriculation attribuée",
+             message=f"Le numéro {numero} a été attribué à votre véhicule.",
+             categorie="Traitement", lien=f"/dossiers/{dossier.id}",
+             cta_label="Voir le dossier")
     return True, "Immatriculation attribuée.", immat

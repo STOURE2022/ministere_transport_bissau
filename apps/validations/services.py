@@ -15,6 +15,8 @@ from django.db import transaction
 
 from apps.core.services import log_action
 from apps.dossiers.models import Dossier, StatutDossier
+from apps.notifications.models import NiveauNotification
+from apps.notifications.services import notifier
 
 from .models import ActionValidation, ValidationAgent
 
@@ -40,6 +42,12 @@ def valider_dossier(dossier: Dossier, agent, commentaire: str = "", *, request=N
     dossier.statut = StatutDossier.VALIDE
     dossier.motif_rejet = ""
     decision = _enregistrer(dossier, agent, ActionValidation.VALIDE, commentaire, request)
+    notifier(dossier.usager, NiveauNotification.SUCCES,
+             titre="Dossier validé par l'agent",
+             message=f"Votre dossier {dossier.numero_dossier} a été validé. "
+                     "L'immatriculation va être attribuée.",
+             categorie="Traitement", lien=f"/dossiers/{dossier.id}",
+             cta_label="Voir le dossier")
     return True, "Dossier validé.", decision
 
 
@@ -52,6 +60,11 @@ def rejeter_dossier(dossier: Dossier, agent, motif: str, *, request=None):
     dossier.statut = StatutDossier.REJETE
     dossier.motif_rejet = motif
     decision = _enregistrer(dossier, agent, ActionValidation.REJETE, motif, request)
+    notifier(dossier.usager, NiveauNotification.ALERTE,
+             titre="Dossier rejeté",
+             message=f"Votre dossier {dossier.numero_dossier} a été rejeté. Motif : {motif}",
+             categorie="Traitement", lien=f"/dossiers/{dossier.id}",
+             cta_label="Voir le dossier")
     return True, "Dossier rejeté.", decision
 
 
@@ -65,4 +78,9 @@ def demander_complement(dossier: Dossier, agent, commentaire: str, *, request=No
     dossier.statut = StatutDossier.BROUILLON
     dossier.motif_rejet = ""
     decision = _enregistrer(dossier, agent, ActionValidation.DEMANDE_COMPLEMENT, commentaire, request)
+    notifier(dossier.usager, NiveauNotification.ACTION,
+             titre="Pièce complémentaire demandée",
+             message=f"Pour le dossier {dossier.numero_dossier} : {commentaire}",
+             categorie="Action requise", lien=f"/dossiers/{dossier.id}",
+             cta_label="Déposer la pièce")
     return True, "Demande de complément envoyée à l'usager.", decision

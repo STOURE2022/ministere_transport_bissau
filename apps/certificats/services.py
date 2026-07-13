@@ -14,6 +14,8 @@ from django.utils import timezone
 
 from apps.core.services import log_action
 from apps.dossiers.models import Dossier, StatutDossier, TypeDocument
+from apps.notifications.models import NiveauNotification
+from apps.notifications.services import notifier
 
 from . import crypto
 from .models import Certificat, StatutCertificat
@@ -92,6 +94,12 @@ def emettre_certificat(dossier: Dossier, agent, *, request=None):
 
     log_action("CERTIFICAT_EMIS", user=agent, objet=dossier, request=request,
                certificat=str(certificat.id), hash=hash_hex)
+    notifier(dossier.usager, NiveauNotification.INFO,
+             titre="Certificat émis · PDF disponible",
+             message="Votre certificat d'immatriculation est disponible. "
+                     "Présentez son QR lors d'un contrôle.",
+             categorie="Certificat", lien=f"/dossiers/{dossier.id}",
+             cta_label="Télécharger le PDF")
     return True, "Certificat émis.", certificat
 
 

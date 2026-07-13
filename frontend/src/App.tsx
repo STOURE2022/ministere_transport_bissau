@@ -9,6 +9,7 @@ import VerifyOtp from "@/pages/VerifyOtp";
 import Dashboard from "@/pages/Dashboard";
 import NouveauDossier from "@/pages/NouveauDossier";
 import DossierDetail from "@/pages/DossierDetail";
+import Notifications from "@/pages/Notifications";
 import AgentDashboard from "@/pages/AgentDashboard";
 import AgentDossier from "@/pages/AgentDossier";
 import PilotageDashboard from "@/pages/PilotageDashboard";
@@ -99,6 +100,16 @@ export default function App() {
             <Protected>
               <RequireRole roles={["USAGER"]}>
                 <DossierDetail />
+              </RequireRole>
+            </Protected>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <Protected>
+              <RequireRole roles={["USAGER"]}>
+                <Notifications />
               </RequireRole>
             </Protected>
           }

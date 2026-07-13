@@ -21,6 +21,7 @@ from apps.certificats.services import emettre_certificat
 from apps.dossiers.models import Document, Dossier, TypeDocument, Vehicule
 from apps.dossiers.services import generer_numero_dossier, soumettre_dossier
 from apps.immatriculations.services import attribuer_immatriculation
+from apps.notifications.services import generer_relances
 from apps.signalements.models import TypeSignalement
 from apps.signalements.services import signaler_vehicule
 from apps.validations.services import valider_dossier
@@ -92,7 +93,27 @@ class Command(BaseCommand):
                                   motif="Véhicule déclaré volé à Bissau (démonstration).")
                 vole_plaque = plaque
 
+        # Échéances proches pour illustrer les alertes (assurance ~12 j, CT ~28 j).
+        self._rapprocher_echeances(usagers)
+        generer_relances()
+
         self._resume(comptes, cert_plaque, vole_plaque, moto_plaque)
+
+    def _rapprocher_echeances(self, usagers):
+        """Rapproche l'assurance/le contrôle technique d'un dossier certifié
+        pour que l'écran d'alertes affiche des échéances rouge/ambre en démo."""
+        today = datetime.date.today()
+        dossier = (
+            Dossier.objects.filter(usager__in=usagers, statut="CERTIFIE")
+            .order_by("date_creation")
+            .first()
+        )
+        if not dossier:
+            return
+        Document.objects.filter(dossier=dossier, type_document=TypeDocument.ASSURANCE).update(
+            date_fin=today + datetime.timedelta(days=12))
+        Document.objects.filter(dossier=dossier, type_document=TypeDocument.CONTROLE_TECHNIQUE).update(
+            date_fin=today + datetime.timedelta(days=28))
 
     # ── création des comptes ──
     def _comptes(self) -> dict[str, User]:

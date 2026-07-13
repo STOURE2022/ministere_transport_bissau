@@ -1,10 +1,49 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, LogOut, ShieldCheck } from "lucide-react";
+import { Bell, Home, LogOut, ShieldCheck } from "lucide-react";
+import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { accueilPourRole, ROLE_LABEL } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useLang, LangSwitcher } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
+
+/** Cloche de notifications (usager) avec pastille de non-lues. */
+function NotificationBell() {
+  const { t } = useLang();
+  const location = useLocation();
+  const [nb, setNb] = useState(0);
+
+  useEffect(() => {
+    let vivant = true;
+    const charger = () =>
+      api
+        .get<{ non_lues: number }>("/notifications/compteur/")
+        .then((r) => vivant && setNb(r.data.non_lues))
+        .catch(() => {});
+    charger();
+    const timer = setInterval(charger, 60_000);
+    return () => {
+      vivant = false;
+      clearInterval(timer);
+    };
+  }, [location.pathname]);
+
+  return (
+    <Link
+      to="/notifications"
+      title={t("Notifications")}
+      className="relative inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-[#B9CBE6] transition-colors hover:bg-white/15 hover:text-white"
+    >
+      <Bell className="size-4" />
+      {nb > 0 && (
+        <span className="absolute -right-1 -top-1 grid min-w-4 place-items-center rounded-full border-2 border-navy bg-[#e5484d] px-1 text-[10px] font-extrabold text-white">
+          {nb > 9 ? "9+" : nb}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 interface NavLink {
   to: string;
@@ -80,6 +119,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="flex-1" />
+        {user?.role === "USAGER" && <NotificationBell />}
         <LangSwitcher className="text-white" />
         <Link
           to="/accueil"
