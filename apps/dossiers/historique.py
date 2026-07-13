@@ -28,6 +28,7 @@ CATEGORIE = {
     "CONTROLE": "Contrôles",
     "SIGNALEMENT": "Sécurité",
     "SIGNALEMENT_LEVE": "Sécurité",
+    "INFRACTION": "Infractions",
 }
 
 _ROLE_LIBELLE = {
@@ -138,7 +139,21 @@ def construire_historique(dossier) -> dict:
                     description=sig.motif_levee, acteur=_acteur(sig.leve_par),
                     tag="Levé", tag_niveau="success")
 
-    # 8. Archivage
+    # 8. Infractions / amendes (procès-verbaux)
+    _TAG_INFRACTION = {
+        "A_REGLER": ("À régler", "danger"),
+        "CONTESTEE": ("Contestée", "warning"),
+        "PAYEE": ("Soldée", "success"),
+        "ANNULEE": ("Annulée", ""),
+    }
+    for inf in v.infractions.all():
+        tag, niveau = _TAG_INFRACTION.get(inf.statut, ("", ""))
+        lieu = inf.lieu or "lieu non précisé"
+        ajouter("INFRACTION", f"PV · {inf.libelle}", inf.date_infraction,
+                description=f"{inf.montant} {inf.devise} · {lieu} (PV {inf.reference}).",
+                acteur=_acteur(inf.dressee_par), tag=tag, tag_niveau=niveau)
+
+    # 9. Archivage
     if dossier.statut == StatutDossier.ARCHIVE:
         ajouter("ARCHIVAGE", "Dossier archivé", dossier.date_maj,
                 description="Le dossier de vie a été figé (consultable, non modifiable).")

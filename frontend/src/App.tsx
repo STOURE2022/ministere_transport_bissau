@@ -14,6 +14,10 @@ import Historique from "@/pages/Historique";
 import Paiement from "@/pages/Paiement";
 import Paiements from "@/pages/Paiements";
 import PaiementsConfig from "@/pages/PaiementsConfig";
+import Amendes from "@/pages/Amendes";
+import Infractions from "@/pages/Infractions";
+import NouveauPV from "@/pages/NouveauPV";
+import InfractionsConfig from "@/pages/InfractionsConfig";
 import AgentDashboard from "@/pages/AgentDashboard";
 import AgentDossier from "@/pages/AgentDossier";
 import PilotageDashboard from "@/pages/PilotageDashboard";
@@ -156,6 +160,50 @@ export default function App() {
             <Protected>
               <RequireRole roles={["ADMIN"]}>
                 <PaiementsConfig />
+              </RequireRole>
+            </Protected>
+          }
+        />
+
+        {/* Amendes (usager) */}
+        <Route
+          path="/amendes"
+          element={
+            <Protected>
+              <RequireRole roles={["USAGER"]}>
+                <Amendes />
+              </RequireRole>
+            </Protected>
+          }
+        />
+
+        {/* Infractions & procès-verbaux (forces de l'ordre / agent / admin) */}
+        <Route
+          path="/infractions"
+          element={
+            <Protected>
+              <RequireRole roles={["FORCE_ORDRE", "AGENT", "ADMIN"]}>
+                <Infractions />
+              </RequireRole>
+            </Protected>
+          }
+        />
+        <Route
+          path="/infractions/nouveau"
+          element={
+            <Protected>
+              <RequireRole roles={["FORCE_ORDRE", "AGENT", "ADMIN"]}>
+                <NouveauPV />
+              </RequireRole>
+            </Protected>
+          }
+        />
+        <Route
+          path="/infractions/configuration"
+          element={
+            <Protected>
+              <RequireRole roles={["ADMIN"]}>
+                <InfractionsConfig />
               </RequireRole>
             </Protected>
           }

@@ -406,6 +406,66 @@ export interface PaiementStats {
   devise: string;
 }
 
+/* ── Amendes & procès-verbaux (infractions) ── */
+export type StatutInfraction = "A_REGLER" | "PAYEE" | "CONTESTEE" | "ANNULEE";
+
+export interface TypeInfraction {
+  id: string;
+  libelle: string;
+  code: string;
+  montant: number;
+  actif: boolean;
+  ordre: number;
+}
+
+export interface Infraction {
+  id: string;
+  reference: string;
+  libelle: string;
+  montant: number;
+  devise: string;
+  lieu: string;
+  observations: string;
+  date_infraction: string;
+  statut: StatutInfraction;
+  statut_libelle: string;
+  motif_contestation: string;
+  motif_annulation: string;
+  operateur: string;
+  numero_telephone: string;
+  reference_transaction: string;
+  quittance_reference: string;
+  paye_le: string | null;
+  date_creation: string;
+  immatriculation: string | null;
+  vin: string;
+  marque: string;
+  modele: string;
+  titulaire: string;
+  dressee_par_nom: string | null;
+  a_quittance: boolean;
+}
+
+export interface InfractionStats {
+  total: number;
+  a_regler: number;
+  contestees: number;
+  payees: number;
+  recettes: number;
+  devise: string;
+}
+
+/** Véhicule résolu par sa plaque pour pré-remplir un PV. */
+export interface InfractionCible {
+  vehicule_id: string;
+  immatriculation: string | null;
+  titulaire: string;
+  marque: string;
+  modele: string;
+  annee: number;
+  types: TypeInfraction[];
+}
+
 export const ENERGIES = ["ESSENCE", "DIESEL", "ELECTRIQUE", "HYBRIDE", "GPL"] as const;
 export const TYPES_VEHICULE = ["VP", "UTILITAIRE", "MOTO", "POIDS_LOURD", "BUS"] as const;
 

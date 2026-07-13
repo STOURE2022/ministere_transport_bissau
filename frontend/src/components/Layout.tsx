@@ -56,20 +56,26 @@ function liensPourRole(role: string): NavLink[] {
       { to: "/pilotage", label: "Pilotage" },
       { to: "/agent", label: "File de validation" },
       { to: "/paiements", label: "Paiements" },
+      { to: "/infractions", label: "Infractions" },
     ];
   }
   if (role === "AGENT") {
     return [
       { to: "/agent", label: "File de validation" },
       { to: "/paiements", label: "Paiements" },
+      { to: "/infractions", label: "Infractions" },
     ];
   }
   if (role === "FORCE_ORDRE") {
-    return [{ to: "/controle", label: "Contrôle" }];
+    return [
+      { to: "/controle", label: "Contrôle" },
+      { to: "/infractions", label: "Infractions" },
+    ];
   }
   return [
     { to: "/", label: "Mes dossiers" },
     { to: "/dossiers/nouveau", label: "Nouveau dossier" },
+    { to: "/amendes", label: "Mes amendes" },
   ];
 }
 

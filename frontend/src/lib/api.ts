@@ -116,6 +116,27 @@ export async function ouvrirRecuPdf(paiementId: string): Promise<void> {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
+/** Télécharge la quittance d'amende (PDF) via l'endpoint authentifié. */
+export async function telechargerQuittancePdf(infractionId: string, reference: string): Promise<void> {
+  const { data } = await api.get(`/infractions/${infractionId}/quittance/`, { responseType: "blob" });
+  const url = URL.createObjectURL(data as Blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `quittance-${reference}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Ouvre la quittance d'amende (PDF) dans un nouvel onglet (endpoint authentifié, inline). */
+export async function ouvrirQuittancePdf(infractionId: string): Promise<void> {
+  const { data } = await api.get(`/infractions/${infractionId}/quittance/`, { responseType: "blob" });
+  const url = URL.createObjectURL(data as Blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 /** Ouvre le PDF du dossier de vie d'un dossier (endpoint authentifié, inline). */
 export async function ouvrirCycleViePdf(dossierId: string): Promise<void> {
   const { data } = await api.get(`/dossiers/${dossierId}/cycle-de-vie/pdf/`, { responseType: "blob" });

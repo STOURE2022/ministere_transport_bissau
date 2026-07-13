@@ -101,7 +101,29 @@ class Command(BaseCommand):
         # Paiement de démo (visible par l'agent / l'admin).
         self._payer_demo(usagers)
 
+        # Procès-verbaux de démo (amende à régler + amende soldée).
+        self._verbaliser_demo(usagers, force)
+
         self._resume(comptes, cert_plaque, vole_plaque, moto_plaque)
+
+    def _verbaliser_demo(self, usagers, force):
+        """Dresse deux PV sur un véhicule immatriculé : un à régler, un soldé."""
+        from apps.infractions.services import dresser_infraction, payer_infraction
+
+        veh = (
+            Vehicule.objects.filter(proprietaire__in=usagers, immatriculation__isnull=False)
+            .order_by("date_creation")
+            .first()
+        )
+        if not veh or veh.infractions.exists():
+            return
+        dresser_infraction(veh, type_code="EXCES_VITESSE",
+                           lieu="Avenida Amílcar Cabral, Bissau", agent=force)
+        _, _, inf = dresser_infraction(veh, type_code="STATIONNEMENT",
+                                       lieu="Mercado de Bandim, Bissau", agent=force)
+        if inf:
+            payer_infraction(inf, operateur_code="ORANGE", numero="95 500 01 03",
+                             user=veh.proprietaire)
 
     def _payer_demo(self, usagers):
         """Règle la taxe d'un dossier certifié pour peupler la liste des paiements."""

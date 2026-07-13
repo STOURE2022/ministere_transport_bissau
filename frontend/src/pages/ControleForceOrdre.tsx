@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Camera, Info, Loader2, QrCode, ScanLine, Search, ShieldCheck, WifiOff } from "lucide-react";
+import { Camera, FileWarning, Info, Loader2, QrCode, ScanLine, Search, ShieldCheck, WifiOff } from "lucide-react";
 import { api, messageErreur } from "@/lib/api";
 import { formatDateTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -224,6 +224,17 @@ export default function ControleForceOrdre() {
         <div ref={resultRef} className="mt-6">
           <div className="eyebrow mb-2">{t("Résultat de la vérification")}</div>
           <ResultatVerification res={res} />
+          {(res.immatriculation ?? res.certificat?.immatriculation) && (
+            <Link
+              to={`/infractions/nouveau?immatriculation=${encodeURIComponent(
+                res.immatriculation ?? res.certificat?.immatriculation ?? ""
+              )}`}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#a3312f] px-4 py-2.5 text-[13.5px] font-semibold text-white transition hover:brightness-110"
+            >
+              <FileWarning className="size-4" />
+              {t("Dresser un PV pour ce véhicule")}
+            </Link>
+          )}
         </div>
       )}
 
