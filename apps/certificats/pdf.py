@@ -98,8 +98,41 @@ def _champ(c, x, top, label, valeur, taille_valeur=12, mono=False):
     _texte(c, x, top + 15, str(valeur), police, taille_valeur, ENCRE)
 
 
+JAUNE_MOTO = HexColor("#f5c518")
+
+
+def _est_plaque_moto(numero: str | None) -> bool:
+    """Les plaques moto/tricycle se terminent par le suffixe dédié « SB »."""
+    return bool(numero) and numero.strip().upper().endswith(" SB")
+
+
+def _plaque_moto(c, x, top, numero, cote=78):
+    """Plaque moto carrée (fond jaune, 2 lignes) ; retourne la hauteur occupée."""
+    parts = numero.split()
+    suffixe = parts[-1] if parts else ""
+    corps = " ".join(parts[:-1]) if len(parts) > 1 else numero
+    y = _y(top + cote)
+    # Corps jaune bordé
+    c.setFillColor(JAUNE_MOTO)
+    c.setStrokeColor(ENCRE)
+    c.setLineWidth(1.8)
+    c.roundRect(x, y, cote, cote, 7, fill=1, stroke=1)
+    # Bandeau pays bleu (haut)
+    strip = 18
+    c.setFillColor(BLEU)
+    c.roundRect(x + 2.5, y + cote - strip - 2.5, cote - 5, strip, 4, fill=1, stroke=0)
+    _etoile(c, x + 12, top + strip / 2 + 1, 4.5, OR_CLAIR)
+    _texte_centre(c, x + cote / 2 + 5, top + strip / 2 + 4, "GW · MOTO", "Helvetica-Bold", 8, BLANC, tracking=0.6)
+    # Numéro sur deux lignes
+    _texte_centre(c, x + cote / 2, top + strip + 30, corps, "Helvetica-Bold", 21, ENCRE, tracking=1.5)
+    _texte_centre(c, x + cote / 2, top + strip + 52, suffixe, "Helvetica-Bold", 15, ENCRE, tracking=3)
+    return cote
+
+
 def _plaque(c, x, top, numero, largeur=214, hauteur=50):
-    """Plaque minéralogique GW stylisée."""
+    """Plaque minéralogique GW stylisée ; retourne la hauteur occupée."""
+    if _est_plaque_moto(numero):
+        return _plaque_moto(c, x, top, numero)
     y = _y(top + hauteur)
     # Corps blanc bordé
     c.setFillColor(BLANC)
@@ -115,6 +148,7 @@ def _plaque(c, x, top, numero, largeur=214, hauteur=50):
     # Numéro
     cx = x + bande + (largeur - bande) / 2 + 2
     _texte_centre(c, cx, top + hauteur / 2 + 9, numero or "—", "Helvetica-Bold", 25, ENCRE, tracking=2)
+    return hauteur
 
 
 def _sceau(c, cx, cy, r=52):
@@ -188,10 +222,10 @@ def rendre_certificat_pdf(certificat) -> bytes:
     # ── Région haute : plaque + titulaire (gauche) · QR (droite) ──
     region_top = top + header_h + 34
     col_g = M + 6
-    _plaque(c, col_g, region_top, snap.get("immatriculation") or "—")
+    h_plaque = _plaque(c, col_g, region_top, snap.get("immatriculation") or "—")
 
     # Titulaire mis en avant
-    bloc_top = region_top + 74
+    bloc_top = region_top + h_plaque + 24
     _texte(c, col_g, bloc_top, "TITULAIRE DU CERTIFICAT", "Helvetica", 7.5, FAINT, tracking=1.1)
     _texte(c, col_g, bloc_top + 20, snap.get("proprietaire") or "—", "Helvetica-Bold", 16, ENCRE)
 

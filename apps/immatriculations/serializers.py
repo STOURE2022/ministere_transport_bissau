@@ -8,9 +8,12 @@ class ImmatriculationSerializer(serializers.ModelSerializer):
     vehicule_uuid = serializers.UUIDField(source="vehicule_id", read_only=True)
     agent_nom = serializers.SerializerMethodField()
 
+    est_moto = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = Immatriculation
-        fields = ("numero", "serie_plaque", "vehicule_uuid", "agent_nom", "date_attribution")
+        fields = ("numero", "serie_plaque", "categorie", "est_moto",
+                  "vehicule_uuid", "agent_nom", "date_attribution")
         read_only_fields = fields
 
     def get_agent_nom(self, obj) -> str | None:

@@ -210,6 +210,8 @@ OTP_CODE_LENGTH = env("OTP_CODE_LENGTH")
 # ── Immatriculation ──
 # Suffixe de plaque (bureau émetteur), ex. « AB 4821 BS » (BS = Bissau).
 IMMATRICULATION_SUFFIXE = env("IMMATRICULATION_SUFFIXE", default="BS")
+# Suffixe dédié aux plaques moto/tricycle (distinct de celui des voitures).
+IMMATRICULATION_SUFFIXE_MOTO = env("IMMATRICULATION_SUFFIXE_MOTO", default="SB")
 
 # ── Certificat QR (signature RSA) ──
 # Répertoire des clés SNICV. La clé PRIVÉE ne doit JAMAIS être committée

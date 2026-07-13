@@ -41,6 +41,7 @@ COMPTES = [
 VEHICULES = [
     ("VF1RFB00X66512345", "Toyota", "Hilux", 2019, "DIESEL", "UTILITAIRE", "CERTIFIE"),
     ("JN1TANT31U0123456", "Nissan", "Navara", 2017, "DIESEL", "UTILITAIRE", "CERTIFIE_VOLE"),
+    ("MD2A21CY7MWK12345", "Yamaha", "Crux", 2022, "ESSENCE", "MOTO", "CERTIFIE"),
     ("VF3CCHMZ6GT024518", "Peugeot", "208", 2016, "ESSENCE", "VP", "EN_VALIDATION"),
     ("MALA851CLMM298471", "Hyundai", "Grand i10", 2021, "ESSENCE", "VP", "EN_VALIDATION"),
     ("WDB9066331S123456", "Mercedes", "Sprinter", 2015, "DIESEL", "UTILITAIRE", "VALIDE"),
@@ -76,20 +77,22 @@ class Command(BaseCommand):
             self._resume(comptes, None, None)
             return
 
-        cert_plaque = vole_plaque = None
+        cert_plaque = vole_plaque = moto_plaque = None
         force = comptes["police@snicv.gw"]
         for i, (vin, marque, modele, annee, energie, type_v, cible) in enumerate(VEHICULES):
             usager = usagers[i % len(usagers)]
             veh = self._construire(usager, agent, vin, marque, modele, annee, energie, type_v, cible)
             plaque = getattr(getattr(veh, "immatriculation", None), "numero", None)
-            if cible == "CERTIFIE":
+            if type_v == "MOTO":
+                moto_plaque = plaque
+            elif cible == "CERTIFIE":
                 cert_plaque = plaque
             elif cible == "CERTIFIE_VOLE":
                 signaler_vehicule(veh, force, type=TypeSignalement.VOLE, reference="PV-2026-0142",
                                   motif="Véhicule déclaré volé à Bissau (démonstration).")
                 vole_plaque = plaque
 
-        self._resume(comptes, cert_plaque, vole_plaque)
+        self._resume(comptes, cert_plaque, vole_plaque, moto_plaque)
 
     # ── création des comptes ──
     def _comptes(self) -> dict[str, User]:
@@ -152,7 +155,7 @@ class Command(BaseCommand):
         return veh
 
     # ── résumé lisible ──
-    def _resume(self, comptes, cert_plaque, vole_plaque):
+    def _resume(self, comptes, cert_plaque, vole_plaque, moto_plaque=None):
         w = self.stdout.write
         w("")
         w(self.style.SUCCESS("=== Donnees de demonstration SNICV pretes ==="))
@@ -164,6 +167,9 @@ class Command(BaseCommand):
         if cert_plaque:
             w("Vehicule CERTIFIE authentique (espace forces de l'ordre) :")
             w(self.style.SUCCESS(f"  Plaque : {cert_plaque}"))
+        if moto_plaque:
+            w("Moto CERTIFIEE (plaque carree jaune, format moto) :")
+            w(self.style.SUCCESS(f"  Plaque : {moto_plaque}"))
         if vole_plaque:
             w("Vehicule certifie MAIS SIGNALE VOLE (alerte au controle) :")
             w(self.style.ERROR(f"  Plaque : {vole_plaque}"))
