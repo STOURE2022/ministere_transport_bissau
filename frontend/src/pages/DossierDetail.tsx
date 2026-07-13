@@ -32,6 +32,7 @@ import {
   type DocumentItem,
   type DossierDetail as Dossier,
   type Immatriculation,
+  type Infraction,
   type MontantPaiement,
   type Verification,
 } from "@/lib/types";
@@ -283,6 +284,8 @@ export default function DossierDetail() {
             <CartePaiement dossierId={dossier.id} />
           )}
 
+          {immat && <CarteAmendes immatriculation={immat.numero} />}
+
           <Panel icon={<Car className="size-[17px]" />} titre={t("Véhicule")}>
             <dl className="grid gap-0">
               <Spec label="VIN" valeur={dossier.vehicule.vin} mono />
@@ -525,6 +528,57 @@ function DocRow({
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── Carte amendes du véhicule (accès direct au règlement) ── */
+function CarteAmendes({ immatriculation }: { immatriculation: string }) {
+  const { t } = useLang();
+  const [amendes, setAmendes] = useState<Infraction[] | null>(null);
+
+  useEffect(() => {
+    api
+      .get<{ results: Infraction[] }>("/infractions/")
+      .then((r) => setAmendes(r.data.results.filter((a) => a.immatriculation === immatriculation)))
+      .catch(() => setAmendes([]));
+  }, [immatriculation]);
+
+  if (!amendes || amendes.length === 0) return null;
+  const aRegler = amendes.filter((a) => a.statut === "A_REGLER");
+  const total = aRegler.reduce((s, a) => s + a.montant, 0);
+  const devise = amendes[0].devise;
+
+  return (
+    <Panel icon={<AlertTriangle className="size-[17px]" />} titre={t("Amendes du véhicule")}>
+      {aRegler.length === 0 ? (
+        <div className="flex items-center gap-2.5 text-[13px] text-success">
+          <CheckCircle2 className="size-5" />
+          <span>{t("Aucune amende à régler.")}</span>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.1em] text-faint">
+                {aRegler.length} {t("amende(s) à régler")}
+              </div>
+              <div className="font-serif text-2xl font-bold text-[#a3312f] tabular-nums">
+                {total.toLocaleString("fr-FR")} {devise}
+              </div>
+            </div>
+            <span className="rounded-full bg-[#fbe7e7] px-3 py-1.5 text-[11px] font-bold text-[#a3312f]">
+              {t("À régler")}
+            </span>
+          </div>
+          <Link
+            to="/amendes"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-[10px] bg-[#a3312f] py-2.5 text-[13.5px] font-semibold text-white transition hover:brightness-110"
+          >
+            <CreditCard className="size-4" /> {t("Régler mes amendes")} <ArrowRight className="size-4" />
+          </Link>
+        </>
+      )}
+    </Panel>
   );
 }
 

@@ -320,3 +320,40 @@ class SoumissionTests(DossierBase):
         resp = self.client.patch(reverse("v1:dossiers:dossier-detail", args=[dossier.id]),
                                  {"vehicule": {"couleur": "Rouge"}}, format="json")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class VerificationPieceTests(DossierBase):
+    """Validation d'une pièce, une par une, par l'agent (conforme / non conforme)."""
+
+    def test_agent_confirme_une_piece(self):
+        dossier = self._creer_dossier()
+        doc = self._ajouter_doc(dossier, TypeDocument.ASSURANCE)
+        self.client.force_authenticate(self.agent)
+        resp = self.client.post(reverse("v1:dossiers:document-verifier", args=[doc.id]),
+                                {"statut": "CONFORME"}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["statut_verif"], "CONFORME")
+        doc.refresh_from_db()
+        self.assertEqual(doc.statut_verif, "CONFORME")
+        self.assertEqual(doc.verifie_par, self.agent)
+
+    def test_refus_exige_un_motif(self):
+        dossier = self._creer_dossier()
+        doc = self._ajouter_doc(dossier, TypeDocument.ASSURANCE)
+        self.client.force_authenticate(self.agent)
+        resp = self.client.post(reverse("v1:dossiers:document-verifier", args=[doc.id]),
+                                {"statut": "NON_CONFORME"}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        resp = self.client.post(reverse("v1:dossiers:document-verifier", args=[doc.id]),
+                                {"statut": "NON_CONFORME", "motif": "Illisible."}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["statut_verif"], "NON_CONFORME")
+        self.assertEqual(resp.data["motif_verif"], "Illisible.")
+
+    def test_usager_ne_peut_pas_verifier(self):
+        dossier = self._creer_dossier()
+        doc = self._ajouter_doc(dossier, TypeDocument.ASSURANCE)
+        self.client.force_authenticate(self.usager)
+        resp = self.client.post(reverse("v1:dossiers:document-verifier", args=[doc.id]),
+                                {"statut": "CONFORME"}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)

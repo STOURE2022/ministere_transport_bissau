@@ -69,6 +69,8 @@ export interface DossierListItem {
   date_soumission: string | null;
 }
 
+export type StatutVerifDocument = "EN_ATTENTE" | "CONFORME" | "NON_CONFORME";
+
 export interface DocumentItem {
   id: string;
   type_document: string;
@@ -76,7 +78,10 @@ export interface DocumentItem {
   hash_fichier: string;
   date_debut: string | null;
   date_fin: string | null;
-  statut_verif: string;
+  statut_verif: StatutVerifDocument;
+  statut_verif_libelle: string;
+  motif_verif: string;
+  verifie_par_nom: string | null;
   date_creation: string;
 }
 

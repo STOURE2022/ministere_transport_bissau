@@ -23,16 +23,25 @@ class VehiculeSerializer(serializers.ModelSerializer):
 
 
 class DocumentSerializer(serializers.ModelSerializer):
+    statut_verif_libelle = serializers.CharField(source="get_statut_verif_display", read_only=True)
+    verifie_par_nom = serializers.SerializerMethodField()
+
     class Meta:
         model = Document
         fields = (
             "id", "dossier", "type_document", "fichier", "format", "taille",
-            "hash_fichier", "date_debut", "date_fin", "statut_verif", "date_creation",
+            "hash_fichier", "date_debut", "date_fin", "statut_verif",
+            "statut_verif_libelle", "motif_verif", "verifie_par_nom", "date_creation",
         )
         read_only_fields = (
             "id", "dossier", "format", "taille", "hash_fichier",
-            "statut_verif", "date_creation",
+            "statut_verif", "statut_verif_libelle", "motif_verif",
+            "verifie_par_nom", "date_creation",
         )
+
+    def get_verifie_par_nom(self, obj) -> str | None:
+        u = obj.verifie_par
+        return f"{u.prenom} {u.nom}".strip() if u else None
 
     def validate_fichier(self, fichier):
         valider_fichier(fichier)
@@ -44,6 +53,13 @@ class DocumentSerializer(serializers.ModelSerializer):
         validated_data["taille"] = fichier.size
         validated_data["hash_fichier"] = calculer_hash_fichier(fichier)
         return super().create(validated_data)
+
+
+class VerifierDocumentSerializer(serializers.Serializer):
+    """Décision de l'agent sur une pièce : conforme ou non conforme."""
+
+    statut = serializers.ChoiceField(choices=["CONFORME", "NON_CONFORME"])
+    motif = serializers.CharField(required=False, allow_blank=True, default="")
 
 
 class UsagerMiniSerializer(serializers.Serializer):

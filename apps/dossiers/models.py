@@ -153,6 +153,11 @@ class Document(TimeStampedModel):
         "Statut de vérification", max_length=14,
         choices=StatutVerifDocument.choices, default=StatutVerifDocument.EN_ATTENTE,
     )
+    motif_verif = models.TextField("Motif (si non conforme)", blank=True, default="")
+    verifie_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="documents_verifies", verbose_name="Vérifié par",
+    )
 
     class Meta:
         verbose_name = "Document"

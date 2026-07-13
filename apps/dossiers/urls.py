@@ -7,6 +7,7 @@ from .views import (
     DocumentDetailView,
     DocumentFichierView,
     DocumentListCreateView,
+    DocumentVerifierView,
     DossierViewSet,
     HistoriquePdfView,
     HistoriqueView,
@@ -28,6 +29,8 @@ urlpatterns = [
          DocumentListCreateView.as_view(), name="dossier-documents"),
     path("documents/<uuid:pk>/fichier/",
          DocumentFichierView.as_view(), name="document-fichier"),
+    path("documents/<uuid:pk>/verifier/",
+         DocumentVerifierView.as_view(), name="document-verifier"),
     path("documents/<uuid:pk>/",
          DocumentDetailView.as_view(), name="document-detail"),
 ]

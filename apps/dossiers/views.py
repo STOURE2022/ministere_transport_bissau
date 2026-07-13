@@ -14,18 +14,19 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.core.permissions import IsAdmin
+from apps.core.permissions import IsAdmin, IsAgentOrAdmin
 from apps.core.services import log_action
 
 from .historique import construire_historique
 from .historique_pdf import rendre_historique_pdf
-from .models import Document, Dossier, StatutDossier
+from .models import Document, Dossier, StatutDossier, StatutVerifDocument
 from .permissions import STAFF_ROLES, IsProprietaireOrStaff
 from .serializers import (
     DocumentSerializer,
     DossierCreateSerializer,
     DossierDetailSerializer,
     DossierListSerializer,
+    VerifierDocumentSerializer,
 )
 from .services import archiver_dossier, generer_numero_dossier, soumettre_dossier
 
@@ -221,6 +222,35 @@ class DocumentFichierView(APIView):
             as_attachment=False,
             filename=nom,
         )
+
+
+class DocumentVerifierView(APIView):
+    """
+    Validation d'une pièce, une par une, par l'agent : conforme ou non conforme
+    (avec motif). Indépendant de la décision globale sur le dossier.
+    """
+
+    permission_classes = [IsAuthenticated, IsAgentOrAdmin]
+
+    @extend_schema(request=VerifierDocumentSerializer, responses={200: DocumentSerializer})
+    def post(self, request, pk):
+        document = get_object_or_404(Document.objects.select_related("dossier"), pk=pk)
+        s = VerifierDocumentSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        statut = s.validated_data["statut"]
+        motif = s.validated_data.get("motif", "").strip()
+        if statut == StatutVerifDocument.NON_CONFORME and not motif:
+            return Response({"detail": "Un motif est requis pour une pièce non conforme."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        document.statut_verif = statut
+        document.motif_verif = motif if statut == StatutVerifDocument.NON_CONFORME else ""
+        document.verifie_par = request.user
+        document.save(update_fields=["statut_verif", "motif_verif", "verifie_par", "date_maj"])
+
+        log_action("PIECE_VERIFIEE", user=request.user, objet=document.dossier,
+                   request=request, type_document=document.type_document, statut=statut)
+        return Response(DocumentSerializer(document).data)
 
 
 class DocumentDetailView(RetrieveDestroyAPIView):

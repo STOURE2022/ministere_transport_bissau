@@ -768,4 +768,16 @@ const PT: Record<string, string> = {
   "Régler l'amende": "Pagar a multa",
   "Voir la quittance": "Ver o recibo",
   "Voir mes amendes": "Ver as minhas multas",
+  "Amendes du véhicule": "Multas do veículo",
+  "Aucune amende à régler.": "Nenhuma multa a pagar.",
+  "Régler mes amendes": "Pagar as minhas multas",
+
+  /* ── Validation des pièces (agent) ── */
+  "Confirmer": "Confirmar",
+  "Refuser": "Recusar",
+  "Confirmer le refus": "Confirmar a recusa",
+  "Motif du refus (obligatoire)": "Motivo da recusa (obrigatório)",
+  "Vérifié par": "Verificado por",
+  "Conforme": "Conforme",
+  "Non conforme": "Não conforme",
 };

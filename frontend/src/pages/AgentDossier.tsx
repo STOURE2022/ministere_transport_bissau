@@ -259,7 +259,12 @@ export default function AgentDossier() {
               ) : (
                 <ul className="space-y-2.5">
                   {dossier.documents.map((doc) => (
-                    <PieceLigne key={doc.id} doc={doc} />
+                    <PieceLigne
+                      key={doc.id}
+                      doc={doc}
+                      verifiable={dossier.statut === "EN_VALIDATION"}
+                      onDone={recharger}
+                    />
                   ))}
                 </ul>
               )}
@@ -848,11 +853,31 @@ function Retour({ erreur, succes }: { erreur: string | null; succes: string | nu
   );
 }
 
-/** Pièce justificative avec consultation du fichier (l'agent l'ouvre pour valider). */
-function PieceLigne({ doc }: { doc: DocumentItem }) {
+/* Icône + couleur selon le statut de vérification d'une pièce. */
+const VERIF_META: Record<string, { Icon: typeof CheckCircle2; color: string; tint: string }> = {
+  CONFORME: { Icon: CheckCircle2, color: "#166b44", tint: "#e7f2ec" },
+  NON_CONFORME: { Icon: XCircle, color: "#a3312f", tint: "#fbe7e7" },
+  EN_ATTENTE: { Icon: Clock, color: "#8a6410", tint: "#f7efd9" },
+};
+
+/** Pièce justificative : consultation + validation une par une (conforme / non conforme). */
+function PieceLigne({
+  doc,
+  verifiable,
+  onDone,
+}: {
+  doc: DocumentItem;
+  verifiable: boolean;
+  onDone: () => Promise<void>;
+}) {
   const { t } = useLang();
   const [ouvre, setOuvre] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [refus, setRefus] = useState(false);
+  const [motif, setMotif] = useState("");
+  const [busy, setBusy] = useState<"" | "ok" | "ko">("");
+
+  const meta = VERIF_META[doc.statut_verif] ?? VERIF_META.EN_ATTENTE;
 
   async function voir() {
     setOuvre(true);
@@ -866,32 +891,122 @@ function PieceLigne({ doc }: { doc: DocumentItem }) {
     }
   }
 
+  async function verifier(statut: "CONFORME" | "NON_CONFORME") {
+    if (statut === "NON_CONFORME" && !motif.trim()) {
+      setRefus(true);
+      return;
+    }
+    setBusy(statut === "CONFORME" ? "ok" : "ko");
+    setErreur(null);
+    try {
+      await api.post(`/documents/${doc.id}/verifier/`, {
+        statut,
+        motif: statut === "NON_CONFORME" ? motif.trim() : "",
+      });
+      setRefus(false);
+      setMotif("");
+      await onDone();
+    } catch (err) {
+      setErreur(messageErreur(err));
+    } finally {
+      setBusy("");
+    }
+  }
+
   return (
-    <li className="flex items-start gap-3 rounded-lg border border-border p-3">
-      <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium">
-            {t(DOC_LABEL[doc.type_document] ?? doc.type_document)}
-          </span>
-          <span className="rounded bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold uppercase text-faint">
-            {doc.format}
-          </span>
-        </div>
-        {(doc.date_debut || doc.date_fin) && (
-          <p className="mt-0.5 text-[12px] text-muted-foreground tnum">
-            {formatDate(doc.date_debut)} → {formatDate(doc.date_fin)}
-          </p>
-        )}
-        <p className="mt-0.5 truncate font-mono text-[10.5px] text-faint">
-          SHA-256 : {doc.hash_fichier}
-        </p>
-        <div className="mt-2 flex items-center gap-3">
-          <Button size="sm" variant="outline" className="h-8" onClick={voir} disabled={ouvre}>
-            {ouvre ? <Loader2 className="size-3.5 animate-spin" /> : <Eye className="size-3.5" />}
-            {t("Voir la pièce")}
-          </Button>
-          {erreur && <span className="text-[12px] text-destructive">{erreur}</span>}
+    <li className="rounded-lg border border-border p-3">
+      <div className="flex items-start gap-3">
+        <span
+          className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full"
+          style={{ color: meta.color }}
+        >
+          <meta.Icon className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-medium">
+              {t(DOC_LABEL[doc.type_document] ?? doc.type_document)}
+            </span>
+            <span
+              className="rounded-full px-2 py-0.5 text-[10.5px] font-bold"
+              style={{ background: meta.tint, color: meta.color }}
+            >
+              {t(doc.statut_verif_libelle)}
+            </span>
+          </div>
+          {(doc.date_debut || doc.date_fin) && (
+            <p className="mt-0.5 text-[12px] text-muted-foreground tnum">
+              {formatDate(doc.date_debut)} → {formatDate(doc.date_fin)}
+            </p>
+          )}
+          {doc.statut_verif === "NON_CONFORME" && doc.motif_verif && (
+            <p className="mt-1 rounded-lg bg-[#fbe7e7] px-2.5 py-1.5 text-[12px] text-[#9a2f2f]">
+              {doc.motif_verif}
+            </p>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="outline" className="h-8" onClick={voir} disabled={ouvre}>
+              {ouvre ? <Loader2 className="size-3.5 animate-spin" /> : <Eye className="size-3.5" />}
+              {t("Voir la pièce")}
+            </Button>
+            {verifiable && (
+              <>
+                <Button
+                  size="sm"
+                  variant="success"
+                  className="h-8"
+                  disabled={busy !== ""}
+                  onClick={() => verifier("CONFORME")}
+                >
+                  {busy === "ok" ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
+                  {t("Confirmer")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="h-8"
+                  disabled={busy !== ""}
+                  onClick={() => (refus ? verifier("NON_CONFORME") : setRefus(true))}
+                >
+                  {busy === "ko" ? <Loader2 className="size-3.5 animate-spin" /> : <XCircle className="size-3.5" />}
+                  {t("Refuser")}
+                </Button>
+              </>
+            )}
+          </div>
+          {refus && verifiable && (
+            <div className="mt-2">
+              <textarea
+                value={motif}
+                onChange={(e) => setMotif(e.target.value)}
+                rows={2}
+                autoFocus
+                placeholder={t("Motif du refus (obligatoire)")}
+                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-[13px] focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+              <div className="mt-1.5 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="h-8"
+                  disabled={busy !== "" || !motif.trim()}
+                  onClick={() => verifier("NON_CONFORME")}
+                >
+                  {busy === "ko" ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                  {t("Confirmer le refus")}
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8" onClick={() => { setRefus(false); setMotif(""); }}>
+                  {t("Annuler")}
+                </Button>
+              </div>
+            </div>
+          )}
+          {erreur && <p className="mt-1.5 text-[12px] text-destructive">{erreur}</p>}
+          {doc.verifie_par_nom && !refus && (
+            <p className="mt-1 text-[11px] text-faint">
+              {t("Vérifié par")} {doc.verifie_par_nom}
+            </p>
+          )}
         </div>
       </div>
     </li>
