@@ -62,6 +62,38 @@ class DossierBase(APITestCase):
         )
 
 
+class DocumentFichierTests(DossierBase):
+    """Consultation du fichier d'une pièce : agent et propriétaire OK, tiers refusé."""
+
+    def _url(self, dossier):
+        doc = self._ajouter_doc(dossier, "ASSURANCE")
+        return reverse("v1:dossiers:document-fichier", args=[doc.id])
+
+    def test_agent_peut_consulter_la_piece(self):
+        url = self._url(self._creer_dossier(self.usager))
+        self.client.force_authenticate(self.agent)
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp["Content-Type"], "application/pdf")
+
+    def test_proprietaire_peut_consulter_sa_piece(self):
+        url = self._url(self._creer_dossier(self.usager))
+        self.client.force_authenticate(self.usager)
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_tiers_ne_peut_pas_consulter(self):
+        url = self._url(self._creer_dossier(self.usager))
+        self.client.force_authenticate(self.autre)
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_anonyme_refuse(self):
+        url = self._url(self._creer_dossier(self.usager))
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
 class CreationDossierTests(DossierBase):
     def test_usager_cree_dossier_avec_vehicule(self):
         self.client.force_authenticate(self.usager)

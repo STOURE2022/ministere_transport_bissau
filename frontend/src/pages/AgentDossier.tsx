@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock,
   Download,
+  Eye,
   FileCheck2,
   FileText,
   Hash,
@@ -20,7 +21,7 @@ import {
   User,
   XCircle,
 } from "lucide-react";
-import { api, messageErreur, telechargerCertificatPdf } from "@/lib/api";
+import { api, messageErreur, ouvrirDocument, telechargerCertificatPdf } from "@/lib/api";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/i18n";
@@ -28,6 +29,7 @@ import {
   DOCUMENTS_REQUIS,
   TYPE_VEHICULE_LABEL,
   type Certificat,
+  type DocumentItem,
   type DossierDetail as Dossier,
   type Immatriculation,
   type ValidationDecision,
@@ -245,30 +247,7 @@ export default function AgentDossier() {
               ) : (
                 <ul className="space-y-2.5">
                   {dossier.documents.map((doc) => (
-                    <li
-                      key={doc.id}
-                      className="flex items-start gap-3 rounded-lg border border-border p-3"
-                    >
-                      <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-medium">
-                            {t(DOC_LABEL[doc.type_document] ?? doc.type_document)}
-                          </span>
-                          <span className="rounded bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold uppercase text-faint">
-                            {doc.format}
-                          </span>
-                        </div>
-                        {(doc.date_debut || doc.date_fin) && (
-                          <p className="mt-0.5 text-[12px] text-muted-foreground tnum">
-                            {formatDate(doc.date_debut)} → {formatDate(doc.date_fin)}
-                          </p>
-                        )}
-                        <p className="mt-0.5 truncate font-mono text-[10.5px] text-faint">
-                          SHA-256 : {doc.hash_fichier}
-                        </p>
-                      </div>
-                    </li>
+                    <PieceLigne key={doc.id} doc={doc} />
                   ))}
                 </ul>
               )}
@@ -854,5 +833,55 @@ function Retour({ erreur, succes }: { erreur: string | null; succes: string | nu
     >
       {erreur ?? succes}
     </div>
+  );
+}
+
+/** Pièce justificative avec consultation du fichier (l'agent l'ouvre pour valider). */
+function PieceLigne({ doc }: { doc: DocumentItem }) {
+  const { t } = useLang();
+  const [ouvre, setOuvre] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  async function voir() {
+    setOuvre(true);
+    setErreur(null);
+    try {
+      await ouvrirDocument(doc.id);
+    } catch {
+      setErreur(t("Pièce momentanément indisponible."));
+    } finally {
+      setOuvre(false);
+    }
+  }
+
+  return (
+    <li className="flex items-start gap-3 rounded-lg border border-border p-3">
+      <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-medium">
+            {t(DOC_LABEL[doc.type_document] ?? doc.type_document)}
+          </span>
+          <span className="rounded bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold uppercase text-faint">
+            {doc.format}
+          </span>
+        </div>
+        {(doc.date_debut || doc.date_fin) && (
+          <p className="mt-0.5 text-[12px] text-muted-foreground tnum">
+            {formatDate(doc.date_debut)} → {formatDate(doc.date_fin)}
+          </p>
+        )}
+        <p className="mt-0.5 truncate font-mono text-[10.5px] text-faint">
+          SHA-256 : {doc.hash_fichier}
+        </p>
+        <div className="mt-2 flex items-center gap-3">
+          <Button size="sm" variant="outline" className="h-8" onClick={voir} disabled={ouvre}>
+            {ouvre ? <Loader2 className="size-3.5 animate-spin" /> : <Eye className="size-3.5" />}
+            {t("Voir la pièce")}
+          </Button>
+          {erreur && <span className="text-[12px] text-destructive">{erreur}</span>}
+        </div>
+      </div>
+    </li>
   );
 }

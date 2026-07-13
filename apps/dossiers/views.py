@@ -1,12 +1,17 @@
 """Endpoints de l'app dossiers (étape 2 du processus métier)."""
+import mimetypes
+
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.core.services import log_action
 
@@ -136,6 +141,37 @@ class DocumentListCreateView(ListCreateAPIView):
         document = serializer.save(dossier=dossier)
         log_action("DOCUMENT_AJOUTE", user=self.request.user, objet=dossier,
                    request=self.request, type_document=document.type_document)
+
+
+class DocumentFichierView(APIView):
+    """
+    Sert le FICHIER d'une pièce justificative (propriétaire ou staff).
+
+    Indispensable pour que l'agent puisse *consulter* les pièces avant de valider
+    un dossier : les médias ne sont pas servis publiquement en production, on passe
+    donc par cet endpoint authentifié (comme le PDF du certificat). Réponse *inline*
+    pour un affichage direct dans le navigateur (PDF / image).
+    """
+
+    permission_classes = [IsAuthenticated, IsProprietaireOrStaff]
+
+    @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY})
+    def get(self, request, pk):
+        document = get_object_or_404(Document.objects.select_related("dossier"), pk=pk)
+        self.check_object_permissions(request, document)
+        if not document.fichier:
+            raise NotFound("Fichier indisponible.")
+        content_type = mimetypes.guess_type(document.fichier.name)[0] or "application/octet-stream"
+        extension = (document.format or "").lower().lstrip(".")
+        nom = f"{document.type_document.lower()}-{str(document.id)[:8]}"
+        if extension:
+            nom = f"{nom}.{extension}"
+        return FileResponse(
+            document.fichier.open("rb"),
+            content_type=content_type,
+            as_attachment=False,
+            filename=nom,
+        )
 
 
 class DocumentDetailView(RetrieveDestroyAPIView):

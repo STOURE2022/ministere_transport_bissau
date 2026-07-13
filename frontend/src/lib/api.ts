@@ -82,6 +82,19 @@ export async function telechargerCertificatPdf(uuid: string): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
+/**
+ * Ouvre le fichier d'une pièce justificative dans un nouvel onglet via l'endpoint
+ * authentifié (les médias ne sont pas servis publiquement en production). Permet
+ * à l'agent de consulter réellement les pièces avant de valider un dossier.
+ */
+export async function ouvrirDocument(id: string): Promise<void> {
+  const { data } = await api.get(`/documents/${id}/fichier/`, { responseType: "blob" });
+  const url = URL.createObjectURL(data as Blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  // Laisse au navigateur le temps d'ouvrir l'onglet avant de libérer l'URL.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 /** Extrait un message d'erreur lisible d'une réponse DRF. */
 export function messageErreur(error: unknown, defaut = "Une erreur est survenue."): string {
   const err = error as AxiosError<Record<string, unknown>>;
