@@ -298,6 +298,49 @@ export interface PreferencesNotification {
   delais_disponibles: number[];
 }
 
+/* ── Étape 8 : dossier de vie (historique + archivage) ── */
+export type TypeEvenement =
+  | "CREATION" | "PIECES" | "VERIFICATION" | "VALIDATION" | "REJET" | "COMPLEMENT"
+  | "IMMATRICULATION" | "CERTIFICAT" | "CERTIFICAT_REVOQUE" | "CONTROLE"
+  | "SIGNALEMENT" | "SIGNALEMENT_LEVE" | "ARCHIVAGE";
+
+export interface EvenementVie {
+  type: TypeEvenement;
+  categorie: string;
+  titre: string;
+  description: string;
+  acteur: string | null;
+  date: string;
+  tag: string;
+  tag_niveau: "success" | "warning" | "danger" | "gold" | "";
+}
+
+export interface ResumeVie {
+  statut: StatutDossier;
+  statut_libelle: string;
+  evenements: number;
+  controles: number;
+  controles_authentiques: number;
+  signalements_actifs: number;
+  signalements_leves: number;
+  certificat_actif: boolean;
+  premier_evenement: string | null;
+  dernier_controle: string | null;
+  anciennete_mois: number;
+}
+
+export interface DossierDeVie {
+  dossier: { id: string; numero_dossier: string; statut: StatutDossier; statut_libelle: string };
+  vehicule: {
+    vin: string; marque: string; modele: string; annee: number; energie: string;
+    immatriculation: string | null; titulaire: string;
+  };
+  certificat: { statut: string; date_expiration: string } | null;
+  immatricule_le: string | null;
+  resume: ResumeVie;
+  evenements: EvenementVie[];
+}
+
 export const ENERGIES = ["ESSENCE", "DIESEL", "ELECTRIQUE", "HYBRIDE", "GPL"] as const;
 export const TYPES_VEHICULE = ["VP", "UTILITAIRE", "MOTO", "POIDS_LOURD", "BUS"] as const;
 

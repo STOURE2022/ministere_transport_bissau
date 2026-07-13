@@ -1,5 +1,6 @@
 """Endpoints de l'app dossiers (étape 2 du processus métier)."""
 import mimetypes
+from io import BytesIO
 
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
@@ -13,8 +14,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.permissions import IsAdmin
 from apps.core.services import log_action
 
+from .historique import construire_historique
+from .historique_pdf import rendre_historique_pdf
 from .models import Document, Dossier, StatutDossier
 from .permissions import STAFF_ROLES, IsProprietaireOrStaff
 from .serializers import (
@@ -23,7 +27,7 @@ from .serializers import (
     DossierDetailSerializer,
     DossierListSerializer,
 )
-from .services import generer_numero_dossier, soumettre_dossier
+from .services import archiver_dossier, generer_numero_dossier, soumettre_dossier
 
 
 class DossierViewSet(viewsets.ModelViewSet):
@@ -115,6 +119,51 @@ class DossierViewSet(viewsets.ModelViewSet):
         dossier.refresh_from_db()
         data = DossierDetailSerializer(dossier).data
         data["verification"] = VerificationAutoSerializer(verif).data
+        return Response(data)
+
+
+class HistoriqueView(APIView):
+    """Dossier de vie : frise chronologique agrégée (propriétaire ou staff)."""
+
+    permission_classes = [IsAuthenticated, IsProprietaireOrStaff]
+
+    @extend_schema(responses={200: OpenApiTypes.OBJECT})
+    def get(self, request, dossier_id):
+        dossier = get_object_or_404(
+            Dossier.objects.select_related("vehicule", "usager"), pk=dossier_id)
+        self.check_object_permissions(request, dossier)
+        return Response(construire_historique(dossier))
+
+
+class HistoriquePdfView(APIView):
+    """Export PDF du dossier de vie (propriétaire ou staff)."""
+
+    permission_classes = [IsAuthenticated, IsProprietaireOrStaff]
+
+    @extend_schema(responses={(200, "application/pdf"): OpenApiTypes.BINARY})
+    def get(self, request, dossier_id):
+        dossier = get_object_or_404(
+            Dossier.objects.select_related("vehicule", "usager"), pk=dossier_id)
+        self.check_object_permissions(request, dossier)
+        pdf = rendre_historique_pdf(construire_historique(dossier))
+        resp = FileResponse(BytesIO(pdf), content_type="application/pdf",
+                            as_attachment=False, filename=f"dossier-de-vie-{dossier.numero_dossier}.pdf")
+        return resp
+
+
+class ArchiverView(APIView):
+    """Archive un dossier (fin de cycle de vie) — administration uniquement."""
+
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    @extend_schema(request=None, responses={200: DossierDetailSerializer})
+    def post(self, request, dossier_id):
+        dossier = get_object_or_404(Dossier, pk=dossier_id)
+        ok, message = archiver_dossier(dossier, request.user, request=request)
+        if not ok:
+            return Response({"detail": message}, status=status.HTTP_400_BAD_REQUEST)
+        data = DossierDetailSerializer(dossier).data
+        data["message"] = message
         return Response(data)
 
 

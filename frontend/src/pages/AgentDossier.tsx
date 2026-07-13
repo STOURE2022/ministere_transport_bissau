@@ -12,6 +12,7 @@ import {
   FileCheck2,
   FileText,
   Hash,
+  History,
   Loader2,
   Mail,
   Phone,
@@ -137,13 +138,24 @@ export default function AgentDossier() {
 
   return (
     <Layout>
-      <Link
-        to="/agent"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
-      >
-        <ArrowLeft className="size-4" />
-        {t("File de validation")}
-      </Link>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <Link
+          to="/agent"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
+        >
+          <ArrowLeft className="size-4" />
+          {t("File de validation")}
+        </Link>
+        {dossier.statut !== "BROUILLON" && (
+          <Link
+            to={`/agent/dossiers/${dossier.id}/cycle-de-vie`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[13px] font-semibold text-navy hover:bg-muted"
+          >
+            <History className="size-4" />
+            {t("Dossier de vie")}
+          </Link>
+        )}
+      </div>
 
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>

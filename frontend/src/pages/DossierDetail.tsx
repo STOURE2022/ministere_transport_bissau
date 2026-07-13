@@ -11,6 +11,7 @@ import {
   FileCheck2,
   Files,
   Gauge,
+  History,
   Loader2,
   ReceiptText,
   Send,
@@ -143,13 +144,24 @@ export default function DossierDetail() {
 
   return (
     <Layout>
-      <Link
-        to="/"
-        className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
-      >
-        <ArrowLeft className="size-4" />
-        {t("Mes dossiers")}
-      </Link>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
+        >
+          <ArrowLeft className="size-4" />
+          {t("Mes dossiers")}
+        </Link>
+        {dossier.statut !== "BROUILLON" && (
+          <Link
+            to={`/dossiers/${dossier.id}/cycle-de-vie`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[13px] font-semibold text-navy hover:bg-muted"
+          >
+            <History className="size-4" />
+            {t("Dossier de vie")}
+          </Link>
+        )}
+      </div>
 
       {/* ── Héro premium ── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-navy to-[#0a1e39] px-6 py-6 text-white shadow-[0_30px_60px_-40px_rgba(10,30,57,.85)] sm:px-8 sm:py-7">

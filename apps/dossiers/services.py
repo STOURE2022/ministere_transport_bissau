@@ -92,3 +92,26 @@ def soumettre_dossier(dossier: Dossier) -> tuple[bool, list[str]]:
     dossier.date_soumission = timezone.now()
     dossier.save(update_fields=["statut", "date_soumission", "date_maj"])
     return True, []
+
+
+# Statuts depuis lesquels un dossier peut être archivé (fin de cycle de vie).
+STATUTS_ARCHIVABLES = {StatutDossier.CERTIFIE, StatutDossier.IMMATRICULE, StatutDossier.REJETE}
+
+
+@transaction.atomic
+def archiver_dossier(dossier: Dossier, user, *, request=None):
+    """
+    Clôt le cycle de vie : passe le dossier à ARCHIVE (consultable, non modifiable).
+    Retourne (succès, message).
+    """
+    from apps.core.services import log_action
+
+    if dossier.statut == StatutDossier.ARCHIVE:
+        return False, "Ce dossier est déjà archivé."
+    if dossier.statut not in STATUTS_ARCHIVABLES:
+        return False, "Seul un dossier immatriculé, certifié ou rejeté peut être archivé."
+    dossier.statut = StatutDossier.ARCHIVE
+    dossier.save(update_fields=["statut", "date_maj"])
+    log_action("DOSSIER_ARCHIVE", user=user, objet=dossier, request=request,
+               numero=dossier.numero_dossier)
+    return True, "Dossier archivé."

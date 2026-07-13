@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard";
 import NouveauDossier from "@/pages/NouveauDossier";
 import DossierDetail from "@/pages/DossierDetail";
 import Notifications from "@/pages/Notifications";
+import Historique from "@/pages/Historique";
 import AgentDashboard from "@/pages/AgentDashboard";
 import AgentDossier from "@/pages/AgentDossier";
 import PilotageDashboard from "@/pages/PilotageDashboard";
@@ -114,6 +115,16 @@ export default function App() {
             </Protected>
           }
         />
+        <Route
+          path="/dossiers/:id/cycle-de-vie"
+          element={
+            <Protected>
+              <RequireRole roles={["USAGER"]}>
+                <Historique />
+              </RequireRole>
+            </Protected>
+          }
+        />
 
         {/* Pilotage national (agent / admin) */}
         <Route
@@ -144,6 +155,16 @@ export default function App() {
             <Protected>
               <RequireRole roles={["AGENT", "ADMIN"]}>
                 <AgentDossier />
+              </RequireRole>
+            </Protected>
+          }
+        />
+        <Route
+          path="/agent/dossiers/:id/cycle-de-vie"
+          element={
+            <Protected>
+              <RequireRole roles={["AGENT", "ADMIN"]}>
+                <Historique />
               </RequireRole>
             </Protected>
           }

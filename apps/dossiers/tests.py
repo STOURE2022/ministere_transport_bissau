@@ -62,6 +62,75 @@ class DossierBase(APITestCase):
         )
 
 
+class HistoriqueArchivageTests(DossierBase):
+    """Dossier de vie (agrégation), export PDF et archivage."""
+
+    def setUp(self):
+        super().setUp()
+        self.admin = creer_user("admin@snicv.gw", role="ADMIN", tel="+24570000004")
+
+    def _certifie(self):
+        dossier = self._creer_dossier(self.usager)
+        self._ajouter_doc(dossier, "ASSURANCE")
+        dossier.statut = "CERTIFIE"
+        dossier.save(update_fields=["statut"])
+        return dossier
+
+    def test_historique_contient_creation_et_pieces(self):
+        from .historique import construire_historique
+        dossier = self._creer_dossier(self.usager)
+        self._ajouter_doc(dossier, "ASSURANCE")
+        data = construire_historique(dossier)
+        types = [e["type"] for e in data["evenements"]]
+        self.assertIn("CREATION", types)
+        self.assertIn("PIECES", types)
+        # Les événements sont triés chronologiquement.
+        dates = [e["date"] for e in data["evenements"]]
+        self.assertEqual(dates, sorted(dates))
+
+    def test_endpoint_historique_owner_et_staff(self):
+        dossier = self._certifie()
+        for user in (self.usager, self.agent):
+            self.client.force_authenticate(user)
+            resp = self.client.get(reverse("v1:dossiers:dossier-cycle-vie", args=[dossier.id]))
+            self.assertEqual(resp.status_code, status.HTTP_200_OK)
+            self.assertIn("evenements", resp.data)
+
+    def test_endpoint_historique_tiers_refuse(self):
+        dossier = self._certifie()
+        self.client.force_authenticate(self.autre)
+        resp = self.client.get(reverse("v1:dossiers:dossier-cycle-vie", args=[dossier.id]))
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_export_pdf(self):
+        dossier = self._certifie()
+        self.client.force_authenticate(self.usager)
+        resp = self.client.get(reverse("v1:dossiers:dossier-cycle-vie-pdf", args=[dossier.id]))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp["Content-Type"], "application/pdf")
+
+    def test_archiver_admin_seulement(self):
+        dossier = self._certifie()
+        # Agent refusé (IsAdmin).
+        self.client.force_authenticate(self.agent)
+        self.assertEqual(
+            self.client.post(reverse("v1:dossiers:dossier-archiver", args=[dossier.id])).status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+        # Admin OK → statut ARCHIVE.
+        self.client.force_authenticate(self.admin)
+        resp = self.client.post(reverse("v1:dossiers:dossier-archiver", args=[dossier.id]))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        dossier.refresh_from_db()
+        self.assertEqual(dossier.statut, "ARCHIVE")
+
+    def test_archiver_refuse_si_brouillon(self):
+        dossier = self._creer_dossier(self.usager)  # BROUILLON
+        self.client.force_authenticate(self.admin)
+        resp = self.client.post(reverse("v1:dossiers:dossier-archiver", args=[dossier.id]))
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+
 class DocumentFichierTests(DossierBase):
     """Consultation du fichier d'une pièce : agent et propriétaire OK, tiers refusé."""
 
