@@ -470,6 +470,13 @@ const PT: Record<string, string> = {
     "Corrija os documentos em causa e submeta novamente este processo — não é preciso criar outro.",
   "Une pièce a été refusée : le certificat est bloqué pour ce dossier.":
     "Um documento foi recusado: o certificado está bloqueado para este processo.",
+  "Refusée": "Recusada",
+  "Remplacer": "Substituir",
+  "Remplacer la pièce": "Substituir o documento",
+  "Remplacer la pièce refusée": "Substituir o documento recusado",
+  "Dossier à corriger": "Processo a corrigir",
+  "Remplacez la ou les pièces refusées ci-dessous, puis soumettez à nouveau.":
+    "Substitua o(s) documento(s) recusado(s) abaixo e submeta novamente.",
   "Jeton copié": "Código copiado",
   "Jeton hors-ligne": "Código offline",
   "Révocation (admin)": "Revogação (admin)",

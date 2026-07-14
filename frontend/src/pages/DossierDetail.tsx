@@ -253,6 +253,20 @@ export default function DossierDetail() {
         </div>
       )}
 
+      {/* ── En correction (rouvert après rejet) : rappel du motif + consigne ── */}
+      {estBrouillon && dossier.motif_rejet && (
+        <div className="mt-5 flex gap-3 rounded-xl border border-[#F1CFCF] bg-[#FBE7E7] p-4">
+          <AlertTriangle className="size-5 shrink-0 text-destructive" />
+          <div>
+            <p className="font-semibold text-[#9a2f2f]">{t("Dossier à corriger")}</p>
+            <p className="mt-0.5 text-[13px] text-[#9a2f2f]">{dossier.motif_rejet}</p>
+            <p className="mt-1 text-[13px] text-[#9a2f2f]">
+              {t("Remplacez la ou les pièces refusées ci-dessous, puis soumettez à nouveau.")}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="mt-5 grid gap-5 lg:grid-cols-[1.55fr_1fr]">
         {/* Colonne principale : pièces */}
         <div className="space-y-5">
@@ -463,8 +477,10 @@ function DocRow({
 }) {
   const { t } = useLang();
   const { accent, tint, Icon } = meta;
+  const refusee = document?.statut_verif === "NON_CONFORME";
   const [ouvre, setOuvre] = useState(false);
   const [errVoir, setErrVoir] = useState<string | null>(null);
+  const [remplacer, setRemplacer] = useState(refusee);
   const sousTitre =
     present && document
       ? document.date_fin
@@ -487,13 +503,14 @@ function DocRow({
     }
   }
 
-  // Bandeau latéral coloré : vert si déposé, accent du type sinon.
-  const stripe = present ? "#1e8e5a" : accent;
+  // Bandeau latéral coloré : rouge si refusée, vert si déposée, accent sinon.
+  const stripe = refusee ? "#a3312f" : present ? "#1e8e5a" : accent;
+  const montrerUpload = estBrouillon && (!present || remplacer);
 
   return (
     <div
       className="overflow-hidden rounded-2xl border bg-card shadow-[0_1px_0_rgba(13,39,72,.03),0_14px_30px_-26px_rgba(13,39,72,.5)]"
-      style={{ borderColor: present ? "#cfe6d9" : "var(--color-border)" }}
+      style={{ borderColor: refusee ? "#f1cfcf" : present ? "#cfe6d9" : "var(--color-border)" }}
     >
       <div className="flex items-stretch">
         <span className="w-1.5 shrink-0" style={{ background: stripe }} aria-hidden />
@@ -502,11 +519,17 @@ function DocRow({
             <span
               className="grid size-10 shrink-0 place-items-center rounded-xl"
               style={{
-                background: present ? "#e7f2ec" : tint,
-                color: present ? "#1e8e5a" : accent,
+                background: refusee ? "#fbe7e7" : present ? "#e7f2ec" : tint,
+                color: refusee ? "#a3312f" : present ? "#1e8e5a" : accent,
               }}
             >
-              {present ? <CheckCircle2 className="size-[22px]" /> : <Icon className="size-[21px]" />}
+              {refusee ? (
+                <AlertTriangle className="size-[21px]" />
+              ) : present ? (
+                <CheckCircle2 className="size-[22px]" />
+              ) : (
+                <Icon className="size-[21px]" />
+              )}
             </span>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold text-foreground">{label}</div>
@@ -530,7 +553,11 @@ function DocRow({
                 {t("Voir")}
               </button>
             )}
-            {present ? (
+            {refusee ? (
+              <span className="rounded-full bg-[#fbe7e7] px-2.5 py-1 text-[11px] font-bold text-[#a3312f]">
+                {t("Refusée")}
+              </span>
+            ) : present ? (
               <span className="rounded-full bg-[#e7f2ec] px-2.5 py-1 text-[11px] font-bold text-success">
                 {t("Déposé")}
               </span>
@@ -543,15 +570,36 @@ function DocRow({
               </span>
             )}
           </div>
+
+          {refusee && document?.motif_verif && (
+            <p className="mt-2 rounded-lg bg-[#FBE7E7] px-3 py-2 text-[12.5px] text-[#9a2f2f]">
+              <b>{t("Motif du refus")} :</b> {document.motif_verif}
+            </p>
+          )}
           {errVoir && <p className="mt-2 text-[12px] text-destructive">{errVoir}</p>}
-          {!present && estBrouillon && (
+
+          {/* En brouillon, une pièce déjà déposée peut être remplacée (correction). */}
+          {present && estBrouillon && !remplacer && (
+            <button
+              type="button"
+              onClick={() => setRemplacer(true)}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-semibold text-navy transition hover:bg-muted"
+            >
+              <UploadCloud className="size-3.5" />
+              {refusee ? t("Remplacer la pièce refusée") : t("Remplacer la pièce")}
+            </button>
+          )}
+          {montrerUpload && (
             <UploadRow
               dossierId={dossierId}
               type={type}
               withDates={withDates}
               accent={accent}
               tint={tint}
-              onDone={onDone}
+              onDone={async () => {
+                setRemplacer(false);
+                await onDone();
+              }}
             />
           )}
         </div>

@@ -131,7 +131,7 @@ class PieceRefuseeTests(ValidationBase):
         self.assertEqual(dossier.statut, StatutDossier.VALIDE)
 
     def test_usager_corrige_le_dossier_rejete(self):
-        """Un dossier rejeté est rouvert (REJETE→BROUILLON) et ses pièces réinitialisées."""
+        """Un dossier rejeté redevient BROUILLON ; l'info de refus des pièces est conservée."""
         dossier = self._dossier(statut=StatutDossier.REJETE)
         dossier.motif_rejet = "Assurance illisible"
         dossier.save(update_fields=["motif_rejet"])
@@ -149,14 +149,33 @@ class PieceRefuseeTests(ValidationBase):
         dossier.refresh_from_db()
         piece.refresh_from_db()
         self.assertEqual(dossier.statut, StatutDossier.BROUILLON)
-        self.assertEqual(dossier.motif_rejet, "")
-        self.assertEqual(piece.statut_verif, StatutVerifDocument.EN_ATTENTE)
+        self.assertTrue(dossier.est_modifiable)
+        # Motif et refus de pièce conservés : l'usager voit quoi corriger.
+        self.assertEqual(dossier.motif_rejet, "Assurance illisible")
+        self.assertEqual(piece.statut_verif, StatutVerifDocument.NON_CONFORME)
 
     def test_rouvrir_refuse_si_non_rejete(self):
         dossier = self._dossier(statut=StatutDossier.EN_VALIDATION)
         self.client.force_authenticate(self.usager)
         resp = self.client.post(reverse("v1:dossiers:dossier-rouvrir", args=[dossier.id]))
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_deposer_remplace_une_piece_du_meme_type(self):
+        """En brouillon, redéposer une pièce du même type remplace l'ancienne (refusée)."""
+        dossier = self._dossier(statut=StatutDossier.BROUILLON)
+        ancienne = self._piece(dossier, StatutVerifDocument.NON_CONFORME)
+        self.client.force_authenticate(self.usager)
+        resp = self.client.post(
+            reverse("v1:dossiers:dossier-documents", args=[dossier.id]),
+            {"type_document": TypeDocument.ASSURANCE,
+             "fichier": SimpleUploadedFile("neuve.pdf", b"%PDF-1.4", content_type="application/pdf")},
+            format="multipart",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        assurances = dossier.documents.filter(type_document=TypeDocument.ASSURANCE)
+        self.assertEqual(assurances.count(), 1)
+        self.assertEqual(assurances.first().statut_verif, StatutVerifDocument.EN_ATTENTE)
+        self.assertFalse(dossier.documents.filter(id=ancienne.id).exists())
 
 
 class PermissionsValidationTests(ValidationBase):

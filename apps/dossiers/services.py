@@ -7,7 +7,7 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from .models import Dossier, StatutDossier, TypeDocument
+from .models import Dossier, StatutDossier, StatutVerifDocument, TypeDocument
 
 
 def generer_numero_dossier() -> str:
@@ -91,6 +91,10 @@ def soumettre_dossier(dossier: Dossier) -> tuple[bool, list[str]]:
     dossier.statut = StatutDossier.SOUMIS
     dossier.date_soumission = timezone.now()
     dossier.save(update_fields=["statut", "date_soumission", "date_maj"])
+    # Nouvelle soumission : la revue des pièces repart à zéro (fraîche pour l'agent).
+    dossier.documents.update(
+        statut_verif=StatutVerifDocument.EN_ATTENTE, motif_verif="", verifie_par=None,
+    )
     return True, []
 
 
@@ -99,22 +103,17 @@ def rouvrir_dossier(dossier: Dossier, user, *, request=None) -> tuple[bool, str]
     """
     Rouvre un dossier REJETE pour correction par l'usager (retour en BROUILLON).
 
-    Réinitialise la vérification des pièces (statut_verif → EN_ATTENTE) afin que,
-    à la re-soumission, le processus normal recommence intégralement (nouvelle
-    vérification auto puis nouvelle revue agent). L'usager corrige LE MÊME dossier
-    au lieu d'en créer un nouveau.
+    Le dossier redevient BROUILLON. Les statuts de vérification des pièces sont
+    **conservés** : l'usager voit ainsi quelle(s) pièce(s) ont été refusée(s) et
+    pourquoi, afin de les remplacer. La revue repart à zéro à la re-soumission.
+    L'usager corrige LE MÊME dossier au lieu d'en créer un nouveau.
     """
     from apps.core.services import log_action
-    from .models import StatutVerifDocument
 
     if dossier.statut != StatutDossier.REJETE:
         return False, "Seul un dossier rejeté peut être corrigé."
     dossier.statut = StatutDossier.BROUILLON
-    dossier.motif_rejet = ""
-    dossier.save(update_fields=["statut", "motif_rejet", "date_maj"])
-    dossier.documents.update(
-        statut_verif=StatutVerifDocument.EN_ATTENTE, motif_verif="", verifie_par=None,
-    )
+    dossier.save(update_fields=["statut", "date_maj"])
     log_action("DOSSIER_ROUVERT", user=user, objet=dossier, request=request,
                numero=dossier.numero_dossier)
     return True, "Dossier rouvert pour correction."

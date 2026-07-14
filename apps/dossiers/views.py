@@ -205,6 +205,11 @@ class DocumentListCreateView(ListCreateAPIView):
             raise PermissionDenied("Seul l'usager propriétaire peut déposer des pièces.")
         if not dossier.est_modifiable:
             raise ValidationError("Impossible d'ajouter une pièce à un dossier déjà soumis.")
+        # Déposer une pièce d'un type déjà présent la remplace (correction d'une
+        # pièce refusée) : on supprime l'ancienne version au préalable.
+        type_doc = serializer.validated_data.get("type_document")
+        if type_doc:
+            dossier.documents.filter(type_document=type_doc).delete()
         document = serializer.save(dossier=dossier)
         log_action("DOCUMENT_AJOUTE", user=self.request.user, objet=dossier,
                    request=self.request, type_document=document.type_document)
